@@ -1,0 +1,12 @@
+﻿--- ITEMS ---
+ID: 2 Name: Drill Machine Owner: dhiraj@gmail.com Image: drill machine.jpg
+ID: 5 Name: something Owner: dhiraj@gmail.com Image: default.png
+ID: 6 Name: Prabhu Owner: dhiraj@gmail.com Image: default.png
+ID: 7 Name: s Owner: dhiraj@gmail.com Image: default.png
+ID: 11 Name: Camera Owner: dhiraj@gmail.com Image: camera.jpg
+ID: 12 Name: Paint Brush Owner: aakanksha@gmail.com Image: Paint Brush.jpg
+--- BOOKINGS ---
+ID: 36 Item_ID: 11 Borrower_ID: 5 Status: Approved
+ID: 37 Item_ID: 11 Borrower_ID: 6 Status: Approved
+ID: 38 Item_ID: 2 Borrower_ID: 6 Status: Pending
+ID: 39 Item_ID: 2 Borrower_ID: 6 Status: Pending

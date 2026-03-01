@@ -1,0 +1,47 @@
+<!doctype html><html lang="en"><head><title>HTTP Status 500 – Internal Server Error</title><style type="text/css">body {font-family:Tahoma,Arial,sans-serif;} h1, h2, h3, b {color:white;background-color:#525D76;} h1 {font-size:22px;} h2 {font-size:16px;} h3 {font-size:14px;} p {font-size:12px;} a {color:black;} .line {height:1px;background-color:#525D76;border:none;}</style></head><body><h1>HTTP Status 500 – Internal Server Error</h1><hr class="line" /><p><b>Type</b> Exception Report</p><p><b>Message</b> org.apache.jasper.JasperException: Unable to compile class for JSP: </p><p><b>Description</b> The server encountered an unexpected condition that prevented it from fulfilling the request.</p><p><b>Exception</b></p><pre>org.apache.jasper.JasperException: org.apache.jasper.JasperException: Unable to compile class for JSP: 
+
+An error occurred at line: [125] in the jsp file: [&#47;viewItems.jsp]
+String literal is not properly closed by a double-quote
+122: 
+123:                                                 &lt;% if(!requested){ %&gt;
+124:                                                     &lt;form action=&quot;BookItemServlet&quot; method=&quot;post&quot;&gt;
+125:                                                         &lt;input type=&quot;hidden&quot; name=&quot;itemId&quot; value=&quot;&lt;%=rs.getInt(&quot;
+126:                                                             id&quot;)%&gt;&quot;&gt;
+127:                                                         &lt;button class=&quot;book-btn&quot;&gt;Send Request&lt;&#47;button&gt;
+128:                                                     &lt;&#47;form&gt;
+
+
+Stacktrace:
+	org.apache.jasper.servlet.JspServletWrapper.handleJspException(JspServletWrapper.java:561)
+	org.apache.jasper.servlet.JspServletWrapper.service(JspServletWrapper.java:397)
+	org.apache.jasper.servlet.JspServlet.serviceJspFile(JspServlet.java:349)
+	org.apache.jasper.servlet.JspServlet.service(JspServlet.java:300)
+	javax.servlet.http.HttpServlet.service(HttpServlet.java:623)
+	org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+</pre><p><b>Root Cause</b></p><pre>org.apache.jasper.JasperException: Unable to compile class for JSP: 
+
+An error occurred at line: [125] in the jsp file: [&#47;viewItems.jsp]
+String literal is not properly closed by a double-quote
+122: 
+123:                                                 &lt;% if(!requested){ %&gt;
+124:                                                     &lt;form action=&quot;BookItemServlet&quot; method=&quot;post&quot;&gt;
+125:                                                         &lt;input type=&quot;hidden&quot; name=&quot;itemId&quot; value=&quot;&lt;%=rs.getInt(&quot;
+126:                                                             id&quot;)%&gt;&quot;&gt;
+127:                                                         &lt;button class=&quot;book-btn&quot;&gt;Send Request&lt;&#47;button&gt;
+128:                                                     &lt;&#47;form&gt;
+
+
+Stacktrace:
+	org.apache.jasper.compiler.DefaultErrorHandler.javacError(DefaultErrorHandler.java:70)
+	org.apache.jasper.compiler.ErrorDispatcher.javacError(ErrorDispatcher.java:189)
+	org.apache.jasper.compiler.JDTCompiler.generateClass(JDTCompiler.java:571)
+	org.apache.jasper.compiler.Compiler.compile(Compiler.java:365)
+	org.apache.jasper.compiler.Compiler.compile(Compiler.java:337)
+	org.apache.jasper.compiler.Compiler.compile(Compiler.java:323)
+	org.apache.jasper.JspCompilationContext.compile(JspCompilationContext.java:585)
+	org.apache.jasper.servlet.JspServletWrapper.service(JspServletWrapper.java:371)
+	org.apache.jasper.servlet.JspServlet.serviceJspFile(JspServlet.java:349)
+	org.apache.jasper.servlet.JspServlet.service(JspServlet.java:300)
+	javax.servlet.http.HttpServlet.service(HttpServlet.java:623)
+	org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51)
+</pre><p><b>Note</b> The full stack trace of the root cause is available in the server logs.</p><hr class="line" /><h3>Apache Tomcat/9.0.115</h3></body></html>
