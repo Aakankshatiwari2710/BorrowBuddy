@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: sharesphere-app
+    runtime: docker
+    plan: free
+    envVars:
+      - key: DB_URL
+        fromDatabase:
+          name: sharesphere-db
+          property: connectionString
+      - key: DB_USER
+        fromDatabase:
+          name: sharesphere-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: sharesphere-db
+          property: password
+
+databases:
+  - name: sharesphere-db
+    plan: free
+    databaseName: sharesphere
+    user: sharesphere_user
