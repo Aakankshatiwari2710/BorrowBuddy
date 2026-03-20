@@ -56,7 +56,7 @@ public class ProcessPaymentServlet extends HttpServlet {
                 
                 // 3. Notify Owner
                 psNotify = con.prepareStatement(
-                    "INSERT INTO notifications(user_id, message, is_read) VALUES (?, ?, 0)"
+                    "INSERT INTO notifications(user_id, message, type, is_read) VALUES (?, ?, 'PAYMENT', 0)"
                 );
                 psNotify.setInt(1, ownerId);
                 psNotify.setString(2, "Payment of ₹" + amount + " received for " + itemName);

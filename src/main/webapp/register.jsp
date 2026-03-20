@@ -8,6 +8,9 @@
         <title>Sign Up | BorrowBuddy</title>
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
             rel="stylesheet">
+
+
+        <jsp:include page="layout/global_scripts.jsp" />
         <style>
             :root {
                 --primary: #0f766e;
@@ -137,12 +140,12 @@
                 <div class="input-grid">
                     <div class="input-group">
                         <label>Full Name</label>
-                        <input type="text" name="name" placeholder="John Doe" required>
+                        <input type="text" name="name" placeholder="Dhiraj Yadav" required>
                     </div>
 
                     <div class="input-group">
                         <label>Email Address</label>
-                        <input type="email" name="email" placeholder="john@example.com" required>
+                        <input type="email" name="email" placeholder="dhiraj@gmail.com" required>
                     </div>
 
                     <div class="input-group">

@@ -1,0 +1,21 @@
+{
+  "name": "ShareSphere",
+  "short_name": "ShareSphere",
+  "start_url": "home.jsp",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f766e",
+  "description": "Premium neighborhood item sharing platform.",
+  "icons": [
+    {
+      "src": "images/logo_192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "images/logo_512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

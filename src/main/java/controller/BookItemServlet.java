@@ -24,6 +24,7 @@ public class BookItemServlet extends HttpServlet {
         int itemId = Integer.parseInt(request.getParameter("itemId"));
         String startDateStr = request.getParameter("startDate");
         String endDateStr = request.getParameter("endDate");
+        String conditionNote = request.getParameter("conditionNote");
 
         Connection con = null;
         PreparedStatement psBooking = null;
@@ -40,13 +41,14 @@ public class BookItemServlet extends HttpServlet {
 
             // ✅ 1. INSERT BOOKING
             psBooking = con.prepareStatement(
-                "INSERT INTO bookings (item_id, borrower_id, start_date, end_date, status, payment_status, agreement_accepted) " +
-                "VALUES (?, ?, ?, ?, 'Pending', 'Unpaid', 0)"
+                "INSERT INTO bookings (item_id, borrower_id, start_date, end_date, status, payment_status, agreement_accepted, condition_note) " +
+                "VALUES (?, ?, ?, ?, 'Pending', 'Unpaid', 0, ?)"
             );
             psBooking.setInt(1, itemId);
             psBooking.setInt(2, borrowerId);
             psBooking.setString(3, startDateStr);
             psBooking.setString(4, endDateStr);
+            psBooking.setString(5, conditionNote);
             psBooking.executeUpdate();
 
             // ✅ 2. GET OWNER ID
@@ -64,7 +66,7 @@ public class BookItemServlet extends HttpServlet {
 
                 // ✅ 3. INSERT NOTIFICATION FOR OWNER
                 psNotify = con.prepareStatement(
-                    "INSERT INTO notifications(user_id,message,type,is_read) VALUES (?,?,?,0)"
+                    "INSERT INTO notifications(user_id, message, type, is_read, created_at) VALUES (?, ?, ?, 0, NOW())"
                 );
                 psNotify.setInt(1, ownerId);
                 psNotify.setString(2, "New booking request for item: " + itemName);

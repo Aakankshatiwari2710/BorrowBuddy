@@ -27,19 +27,21 @@ public class UpdateItemServlet extends HttpServlet {
         String name = request.getParameter("name");
         String description = request.getParameter("description");
         String price = request.getParameter("price");
+        String category = request.getParameter("category");
 
         try {
             Connection con = DBConnection.getConnection();
 
             PreparedStatement ps = con.prepareStatement(
-                "UPDATE items SET name=?, description=?, price=? WHERE id=? AND owner_email=?"
+                "UPDATE items SET name=?, description=?, price=?, category=? WHERE id=? AND owner_email=?"
             );
 
             ps.setString(1, name);
             ps.setString(2, description);
             ps.setDouble(3, Double.parseDouble(price));
-            ps.setInt(4, Integer.parseInt(id));
-            ps.setString(5, (String) session.getAttribute("userEmail"));
+            ps.setString(4, category);
+            ps.setInt(5, Integer.parseInt(id));
+            ps.setString(6, (String) session.getAttribute("userEmail"));
 
             ps.executeUpdate();
             con.close();

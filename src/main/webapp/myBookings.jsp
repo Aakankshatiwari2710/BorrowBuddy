@@ -214,80 +214,119 @@
                                 <div class="alert">✅ Payment successful! Your booking is now confirmed and paid.</div>
                                 <% } %>
 
-                                    <div class="grid">
-                                        <% String
-                                            sql="SELECT b.id, b.item_id, b.status, b.payment_status, b.start_date, b.end_date, "
-                                            + "i.name, i.image, i.price, u.id AS owner_id "
-                                            + "FROM bookings b JOIN items i ON b.item_id = i.id JOIN users u ON u.email = i.owner_email "
-                                            + "WHERE b.borrower_id=? ORDER BY b.id DESC" ; try (Connection
-                                            con=DBConnection.getConnection(); PreparedStatement
-                                            ps=con.prepareStatement(sql)) { ps.setInt(1, userId); try (ResultSet
-                                            rs=ps.executeQuery()) { boolean found=false; while(rs.next()){ found=true;
-                                            String status=rs.getString("status"); String
-                                            payStatus=rs.getString("payment_status"); if (payStatus==null)
-                                            payStatus="Unpaid" ; String imgName=rs.getString("image"); if(imgName==null
-                                            || imgName.isEmpty()) imgName="default.png" ; int
-                                            owner_id=rs.getInt("owner_id"); int item_id=rs.getInt("item_id"); int
-                                            booking_id=rs.getInt("id"); /* Calculate cost per hour */ double
-                                            pricePerHour=rs.getDouble("price"); Timestamp
-                                            st=rs.getTimestamp("start_date"); Timestamp ed=rs.getTimestamp("end_date");
-                                            long hours=1; if(st !=null && ed !=null) { long diff=ed.getTime() -
-                                            st.getTime();
-                                            hours=java.util.concurrent.TimeUnit.MILLISECONDS.toHours(diff); if(hours==0)
-                                            hours=1; } long totalCost=hours * (long)pricePerHour; %>
-                                            <div class="booking-card">
-                                                <div class="payment-badge payment-<%= payStatus %>">
-                                                    <%= payStatus.equals("Paid") ? "✓ PAID" : "UNPAID" %>
-                                                </div>
-                                                <img src="<%=request.getContextPath()%>/images/<%=imgName%>"
-                                                    onerror="this.src='<%=request.getContextPath()%>/images/default.png'">
-                                                <div class="booking-info">
-                                                    <span class="status-badge status-<%=status%>">
-                                                        <%=status%>
-                                                    </span>
-                                                    <h3>
-                                                        <%=rs.getString("name")%>
-                                                    </h3>
-                                                    <div class="date-info">
-                                                        <% java.text.SimpleDateFormat sdf=new
-                                                            java.text.SimpleDateFormat("MMM dd, yyyy HH:mm"); %>
-                                                            <strong>Dates:</strong>
-                                                            <%= (st !=null) ? sdf.format(st) : "" %> <br>
-                                                                <strong>To:</strong>
-                                                                <%= (ed !=null) ? sdf.format(ed) : "" %>
+                                    <% String error=request.getParameter("error"); if ("payment_failed".equals(error)) {
+                                        %>
+                                        <div class="alert" style="background: #fee2e2; color: #991b1b;">❌ Payment
+                                            failed. Please try again or contact support.</div>
+                                        <% } %>
+
+                                            <div class="grid">
+                                                <% String
+                                                    sql="SELECT b.id, b.item_id, b.status, b.payment_status, b.start_date, b.end_date, b.rating_id, "
+                                                    + "i.name, i.image, i.price, u.id AS owner_id "
+                                                    + "FROM bookings b JOIN items i ON b.item_id = i.id JOIN users u ON u.email = i.owner_email "
+                                                    + "WHERE b.borrower_id=? ORDER BY b.id DESC" ; try (Connection
+                                                    con=DBConnection.getConnection(); PreparedStatement
+                                                    ps=con.prepareStatement(sql)) { ps.setInt(1, userId); try (ResultSet
+                                                    rs=ps.executeQuery()) { boolean found=false; while(rs.next()){
+                                                    found=true; String status=rs.getString("status"); String
+                                                    payStatus=rs.getString("payment_status"); if (payStatus==null)
+                                                    payStatus="Unpaid" ; String imgName=rs.getString("image");
+                                                    if(imgName==null || imgName.isEmpty()) imgName="default.png" ; int
+                                                    owner_id=rs.getInt("owner_id"); int item_id=rs.getInt("item_id");
+                                                    int booking_id=rs.getInt("id"); 
+                                                    int ratingId = rs.getInt("rating_id");
+                                                    /* Calculate cost per hour */ double
+                                                    pricePerHour=rs.getDouble("price"); Timestamp
+                                                    st=rs.getTimestamp("start_date"); Timestamp
+                                                    ed=rs.getTimestamp("end_date"); long hours=1; if(st !=null && ed
+                                                    !=null) { long diff=ed.getTime() - st.getTime();
+                                                    hours=java.util.concurrent.TimeUnit.MILLISECONDS.toHours(diff);
+                                                    if(hours==0) hours=1; } long totalCost=hours * (long)pricePerHour;
+                                                    %>
+                                                    <div class="booking-card">
+                                                        <div class="payment-badge payment-<%= payStatus %>">
+                                                            <%= payStatus.equals("Paid") ? "✓ PAID" : "UNPAID" %>
+                                                        </div>
+                                                        <img src="<%=request.getContextPath()%>/images/<%=imgName%>"
+                                                            onerror="this.src='<%=request.getContextPath()%>/images/default.png'">
+                                                        <div class="booking-info">
+                                                            <span class="status-badge status-<%=status%>">
+                                                                <%=status%>
+                                                            </span>
+                                                            <h3>
+                                                                <%=rs.getString("name")%>
+                                                            </h3>
+                                                            <div class="date-info">
+                                                                <% java.text.SimpleDateFormat sdf=new
+                                                                    java.text.SimpleDateFormat("MMM dd, yyyy HH:mm"); %>
+                                                                    <strong>Dates:</strong>
+                                                                    <%= (st !=null) ? sdf.format(st) : "" %> <br>
+                                                                        <strong>To:</strong>
+                                                                        <%= (ed !=null) ? sdf.format(ed) : "" %>
+                                                            </div>
+                                                            <div class="price-info">Amount: ₹<%= totalCost %> (<%= hours
+                                                                        %>
+                                                                        <%= hours> 1 ? "hours" : "hour" %>)</div>
+
+                                                                 <% if ("Approved".equalsIgnoreCase(status) && ratingId == 0) { %>
+                                                                    <button onclick="showRatingForm(<%= booking_id %>, <%= item_id %>)" 
+                                                                            class="btn-pay" style="background:#f59e0b;">⭐ Rate Item</button>
+                                                                 <% } else if (ratingId > 0) { %>
+                                                                    <span style="font-size:12px; color:#10b981; font-weight:600;">✓ Rated</span>
+                                                                 <% } %>
+                                                            </div>
+                                                            <!-- Hidden Rating Form -->
+                                                            <div id="rate-form-<%= booking_id %>" style="display:none; margin-top:15px; background:#f8fafc; padding:15px; border-radius:12px; border:1px solid #e2e8f0;">
+                                                                <form action="SubmitReviewServlet" method="post">
+                                                                    <input type="hidden" name="bookingId" value="<%= booking_id %>">
+                                                                    <input type="hidden" name="itemId" value="<%= item_id %>">
+                                                                    <div style="margin-bottom:10px;">
+                                                                        <label style="font-size:12px; font-weight:600; display:block; margin-bottom:5px;">Rating:</label>
+                                                                        <select name="rating" required style="width:100%; padding:8px; border-radius:8px; border:1px solid #cbd5e1;">
+                                                                            <option value="5">⭐⭐⭐⭐⭐ (Excellent)</option>
+                                                                            <option value="4">⭐⭐⭐⭐ (Good)</option>
+                                                                            <option value="3">⭐⭐⭐ (Average)</option>
+                                                                            <option value="2">⭐⭐ (Poor)</option>
+                                                                            <option value="1">⭐ (Terrible)</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div style="margin-bottom:10px;">
+                                                                        <textarea name="comment" placeholder="Write a short review..." required style="width:100%; padding:8px; border-radius:8px; border:1px solid #cbd5e1; min-height:60px; font-family:inherit;"></textarea>
+                                                                    </div>
+                                                                    <div style="display:flex; gap:10px;">
+                                                                        <button type="submit" class="btn-pay" style="flex:1;">Submit</button>
+                                                                        <button type="button" onclick="hideRatingForm(<%= booking_id %>)" style="flex:1; background:#94a3b8; border:none; color:white; border-radius:8px; font-weight:600; cursor:pointer;">Cancel</button>
+                                                                    </div>
+                                                                </form>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <div class="price-info">Amount: ₹<%= totalCost %> (<%= hours %>
-                                                                <%= hours> 1 ? "hours" : "hour" %>)</div>
-
-                                                    <div
-                                                        style="display:flex; gap:10px; margin-top: 15px; align-items:center;">
-                                                        <a href="chat.jsp?user=<%=owner_id%>&item=<%=item_id%>"
-                                                            class="btn-chat">💬 Chat</a>
-
-                                                        <% if ("Approved".equals(status) && "Unpaid" .equals(payStatus))
-                                                            { %>
-                                                            <a href="billing.jsp?bookingId=<%=booking_id%>&amount=<%=totalCost%>"
-                                                                class="btn-pay">💳 Pay ₹<%=totalCost%></a>
+                                                    <% } if(!found){ %>
+                                                        <div
+                                                            style="grid-column: 1/-1; text-align: center; padding: 60px; background: white; border-radius: 20px;">
+                                                            <p style="color: #94a3b8;">You haven't borrowed anything
+                                                                yet.</p>
+                                                            <a href="viewItems.jsp"
+                                                                style="color: var(--primary); font-weight: 600; text-decoration: none;">Browse
+                                                                items near you →</a>
+                                                        </div>
+                                                        <% } } } catch(Exception e) { %>
+                                                            <div
+                                                                style="grid-column: 1/-1; color: #ef4444; background: white; padding: 20px; border-radius:12px; text-align: center;">
+                                                                Error loading bookings: <%=e.getMessage()%>
+                                                            </div>
                                                             <% } %>
-                                                    </div>
-                                                </div>
                                             </div>
-                                            <% } if(!found){ %>
-                                                <div
-                                                    style="grid-column: 1/-1; text-align: center; padding: 60px; background: white; border-radius: 20px;">
-                                                    <p style="color: #94a3b8;">You haven't borrowed anything yet.</p>
-                                                    <a href="viewItems.jsp"
-                                                        style="color: var(--primary); font-weight: 600; text-decoration: none;">Browse
-                                                        items near you →</a>
-                                                </div>
-                                                <% } } } catch(Exception e) { %>
-                                                    <div
-                                                        style="grid-column: 1/-1; color: #ef4444; background: white; padding: 20px; border-radius:12px; text-align: center;">
-                                                        Error loading bookings: <%=e.getMessage()%>
-                                                    </div>
-                                                    <% } %>
-                                    </div>
                         </div>
+                        <script>
+                            function showRatingForm(bookingId, itemId) {
+                                document.getElementById('rate-form-' + bookingId).style.display = 'block';
+                            }
+                            function hideRatingForm(bookingId) {
+                                document.getElementById('rate-form-' + bookingId).style.display = 'none';
+                            }
+                        </script>
                     </body>
 
                     </html>

@@ -6,13 +6,13 @@
                     session.getAttribute("userEmail"); String userRole=(String) session.getAttribute("userRole"); if
                     (userId==null || userEmail==null || userRole==null || !userRole.equalsIgnoreCase("Owner")) {
                     response.sendRedirect("login.jsp"); return; } String id=request.getParameter("id"); String name="" ,
-                    description="" , image="" ; double price=0; try (Connection con=DBConnection.getConnection();
-                    PreparedStatement ps=con.prepareStatement("SELECT * FROM items WHERE id=? AND owner_email=?")) {
-                    ps.setInt(1, Integer.parseInt(id !=null ? id : "0" )); ps.setString(2, userEmail); try (ResultSet
-                    rs=ps.executeQuery()) { if(rs.next()){ name=rs.getString("name");
-                    description=rs.getString("description"); price=rs.getDouble("price"); image=rs.getString("image"); }
-                    else { response.sendRedirect("myItems.jsp"); return; } } } catch(Exception e){ e.printStackTrace();
-                    } %>
+                    description="" , image="" , category="" ; double price=0; try (Connection
+                    con=DBConnection.getConnection(); PreparedStatement ps=con.prepareStatement("SELECT * FROM items
+                    WHERE id=? AND owner_email=?")) { ps.setInt(1, Integer.parseInt(id !=null ? id : "0" ));
+                    ps.setString(2, userEmail); try (ResultSet rs=ps.executeQuery()) { if(rs.next()){
+                    name=rs.getString("name"); description=rs.getString("description"); price=rs.getDouble("price");
+                    image=rs.getString("image"); category=rs.getString("category"); } else {
+                    response.sendRedirect("myItems.jsp"); return; } } } catch(Exception e){ e.printStackTrace(); } %>
                     <!DOCTYPE html>
                     <html lang="en">
 
@@ -162,6 +162,27 @@
                                         <div class="form-group">
                                             <label>Price per Hour (₹)</label>
                                             <input type="number" name="price" value="<%= (int)price %>" required>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label>Item Category</label>
+                                            <select name="category" required
+                                                style="width: 100%; padding: 12px 15px; border-radius: 12px; border: 1px solid #e2e8f0; font-family: inherit;">
+                                                <option value="Electronics" <%="Electronics" .equals(category)
+                                                    ? "selected" : "" %>>Electronics</option>
+                                                <option value="Toys" <%="Toys" .equals(category) ? "selected" : "" %>
+                                                    >Toys</option>
+                                                <option value="Stationery" <%="Stationery" .equals(category)
+                                                    ? "selected" : "" %>>Stationery</option>
+                                                <option value="Tools" <%="Tools" .equals(category) ? "selected" : "" %>
+                                                    >Tools</option>
+                                                <option value="Appliances" <%="Appliances" .equals(category)
+                                                    ? "selected" : "" %>>Appliances</option>
+                                                <option value="Sports" <%="Sports" .equals(category) ? "selected" : ""
+                                                    %>>Sports</option>
+                                                <option value="Others" <%="Others" .equals(category) ? "selected" : ""
+                                                    %>>Others</option>
+                                            </select>
                                         </div>
 
                                         <button type="submit" class="btn-submit">Update Details</button>

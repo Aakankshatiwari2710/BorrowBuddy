@@ -78,6 +78,44 @@
                                 gap: 15px;
                             }
 
+                            .btn-send:hover {
+                                background: var(--secondary);
+                                transform: translateY(-2px);
+                            }
+
+                            /* Message Avatar Styles */
+                            .msg-row {
+                                display: flex;
+                                gap: 12px;
+                                margin-bottom: 15px;
+                                width: 100%;
+                            }
+
+                            .msg-row.me {
+                                flex-direction: row-reverse;
+                                align-self: flex-end;
+                            }
+
+                            .msg-row.other {
+                                align-self: flex-start;
+                            }
+
+                            .msg-avatar {
+                                width: 35px;
+                                height: 35px;
+                                border-radius: 50%;
+                                overflow: hidden;
+                                flex-shrink: 0;
+                                border: 2px solid #fff;
+                                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+                            }
+
+                            .msg-avatar img {
+                                width: 100%;
+                                height: 100%;
+                                object-fit: cover;
+                            }
+
                             .msg {
                                 max-width: 70%;
                                 padding: 12px 18px;
@@ -87,15 +125,13 @@
                                 position: relative;
                             }
 
-                            .me {
-                                align-self: flex-end;
+                            .me .msg {
                                 background: var(--primary);
                                 color: white;
                                 border-bottom-right-radius: 4px;
                             }
 
-                            .other {
-                                align-self: flex-start;
+                            .other .msg {
                                 background: white;
                                 color: var(--text);
                                 border-bottom-left-radius: 4px;
@@ -103,9 +139,36 @@
                             }
 
                             .chat-input-area {
-                                padding: 20px 30px;
+                                padding: 15px 25px 25px;
+                                border-top: 1px solid var(--border);
                                 background: white;
-                                border-top: 1px solid #f1f5f9;
+                            }
+
+                            .quick-replies {
+                                display: flex;
+                                gap: 10px;
+                                margin-bottom: 12px;
+                                overflow-x: auto;
+                                padding-bottom: 5px;
+                                scrollbar-width: none;
+                            }
+                            .quick-replies::-webkit-scrollbar { display: none; }
+                            .quick-chip {
+                                padding: 6px 15px;
+                                background: #f1f5f9;
+                                border: 1px solid #e2e8f0;
+                                border-radius: 50px;
+                                font-size: 12px;
+                                font-weight: 600;
+                                color: #475569;
+                                cursor: pointer;
+                                white-space: nowrap;
+                                transition: 0.2s;
+                            }
+                            .quick-chip:hover {
+                                background: var(--primary);
+                                color: white;
+                                border-color: var(--primary);
                             }
 
                             .input-form {
@@ -139,11 +202,6 @@
                                 cursor: pointer;
                                 transition: 0.3s;
                             }
-
-                            .btn-send:hover {
-                                background: var(--secondary);
-                                transform: translateY(-2px);
-                            }
                         </style>
                     </head>
 
@@ -152,19 +210,28 @@
 
                         <div class="main-content">
                             <div class="chat-container">
-                                <% String otherUserName="User" ; String otherUserRole="" ; String otherUserLocation="" ;
+                                <% 
+                                    String currentUserImage = (String) session.getAttribute("userImage");
+                                    if(currentUserImage == null || currentUserImage.isEmpty()) currentUserImage = "default_profile.png";
+                                    
+                                    String otherUserName="User" ; String otherUserRole="" ; String otherUserLocation="" ; String otherUserImage="default_profile.png";
                                     try (Connection con=DBConnection.getConnection()) { String
-                                    uq="SELECT name, role, location FROM users WHERE id=?" ; try (PreparedStatement
+                                    uq="SELECT name, role, location, image FROM users WHERE id=?" ; try (PreparedStatement
                                     ups=con.prepareStatement(uq)) { ups.setInt(1, otherUser); try (ResultSet
                                     urs=ups.executeQuery()) { if (urs.next()) { otherUserName=urs.getString("name");
-                                    otherUserRole=urs.getString("role"); otherUserLocation=urs.getString("location"); }
+                                    otherUserRole=urs.getString("role"); otherUserLocation=urs.getString("location"); 
+                                    String img = urs.getString("image");
+                                    if(img != null && !img.isEmpty()) otherUserImage = img;
+                                    }
                                     } } } catch(Exception e) { e.printStackTrace(); } %>
                                     <div class="chat-header">
                                         <div style="display: flex; align-items: center; gap: 15px;">
                                             <div
-                                                style="width: 45px; height: 45px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold;">
-                                                <%= otherUserName !=null && !otherUserName.trim().isEmpty() ?
-                                                    otherUserName.trim().substring(0, 1).toUpperCase() : "U" %>
+                                                style="width: 45px; height: 45px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                                <img src="<%=request.getContextPath()%>/images/profiles/<%=otherUserImage%>" 
+                                                     alt="Profile" 
+                                                     style="width: 100%; height: 100%; object-fit: cover;"
+                                                     onerror="this.src='<%=request.getContextPath()%>/images/default_profile.png'">
                                             </div>
                                             <div>
                                                 <h3>
@@ -192,10 +259,19 @@
                                             + "ORDER BY sent_at ASC" ; try (PreparedStatement
                                             ps=con.prepareStatement(q)) { ps.setInt(1, itemId); ps.setInt(2, userId);
                                             ps.setInt(3, otherUser); ps.setInt(4, otherUser); ps.setInt(5, userId); try
-                                            (ResultSet rs=ps.executeQuery()) { while(rs.next()){ String
-                                            cssClass=(rs.getInt("sender_id")==userId) ? "me" : "other" ; %>
-                                            <div class="msg <%= cssClass %>">
-                                                <%= rs.getString("message") %>
+                                            (ResultSet rs=ps.executeQuery()) { while(rs.next()){ 
+                                                int senderId = rs.getInt("sender_id");
+                                                String cssClass = (senderId == userId) ? "me" : "other" ; 
+                                                String displayImg = (senderId == userId) ? currentUserImage : otherUserImage;
+                                            %>
+                                            <div class="msg-row <%= cssClass %>">
+                                                <div class="msg-avatar">
+                                                    <img src="<%=request.getContextPath()%>/images/profiles/<%= displayImg %>" 
+                                                         onerror="this.src='<%=request.getContextPath()%>/images/default_profile.png'">
+                                                </div>
+                                                <div class="msg">
+                                                    <%= rs.getString("message") %>
+                                                </div>
                                             </div>
                                             <% } } } } catch(Exception e) { %>
                                                 <div style="text-align: center; color: #ef4444;">Error: <%=
@@ -205,10 +281,16 @@
                                     </div>
 
                                     <div class="chat-input-area">
-                                        <form action="ChatServlet" method="post" class="input-form">
+                                        <div class="quick-replies">
+                                            <div class="quick-chip" onclick="setQuickMsg('Is this still available?')">Is it available?</div>
+                                            <div class="quick-chip" onclick="setQuickMsg('Where can I pick this up?')">Where to pick up?</div>
+                                            <div class="quick-chip" onclick="setQuickMsg('When is the best time to meet?')">When to meet?</div>
+                                            <div class="quick-chip" onclick="setQuickMsg('Thank you!')">Thank you!</div>
+                                        </div>
+                                        <form action="ChatServlet" method="post" class="input-form" id="chatForm">
                                             <input type="hidden" name="receiverId" value="<%= otherUser %>">
                                             <input type="hidden" name="itemId" value="<%= itemId %>">
-                                            <input type="text" name="message" placeholder="Type your message here..."
+                                            <input type="text" name="message" id="messageInput" placeholder="Type your message here..."
                                                 required autocomplete="off">
                                             <button type="submit" class="btn-send">Send ✈</button>
                                         </form>
@@ -219,7 +301,15 @@
                         <script>
                             // Scroll to bottom of chat
                             const msgArea = document.getElementById('msgArea');
-                            msgArea.scrollTop = msgArea.scrollHeight;
+                            if(msgArea) msgArea.scrollTop = msgArea.scrollHeight;
+
+                            function setQuickMsg(msg) {
+                                const input = document.getElementById('messageInput');
+                                if(input) {
+                                    input.value = msg;
+                                    input.focus();
+                                }
+                            }
                         </script>
                     </body>
 

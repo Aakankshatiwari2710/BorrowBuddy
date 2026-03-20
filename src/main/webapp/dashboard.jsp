@@ -1,15 +1,49 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-    <%@ page session="true" %>
-        <%@ page import="java.sql.*" %>
-            <%@ page import="util.DBConnection" %>
-                <% HttpSession sessionObj=request.getSession(false); if (sessionObj==null ||
-                    sessionObj.getAttribute("userId")==null) { response.sendRedirect("login.jsp"); return; } Integer
-                    userId=(Integer) sessionObj.getAttribute("userId"); String role=(String)
-                    sessionObj.getAttribute("userRole"); String userName=(String) sessionObj.getAttribute("userName");
-                    int unreadNotifications=0; try (Connection con=DBConnection.getConnection()) { try(PreparedStatement
-                    ps=con.prepareStatement("SELECT COUNT(*) FROM notifications WHERE user_id=? AND is_read=0")){
-                    ps.setInt(1, userId); try(ResultSet rs=ps.executeQuery()){ if(rs.next())
-                    unreadNotifications=rs.getInt(1); } } }catch(Exception e){ e.printStackTrace(); } %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %><%@ page session="true" %><%@ page import="java.sql.*" %><%@ page import="util.DBConnection" %><%
+    Connection conMig = null; Statement stmtMig = null;
+    try {
+        conMig = DBConnection.getConnection(); stmtMig = conMig.createStatement();
+        // 1. Reviews table
+        stmtMig.executeUpdate("CREATE TABLE IF NOT EXISTS reviews (id INT AUTO_INCREMENT PRIMARY KEY, item_id INT, reviewer_id INT, rating INT, comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+        // 2. Bookings updates
+        try { stmtMig.executeUpdate("ALTER TABLE bookings ADD COLUMN rating_id INT NULL"); } catch(Exception e){}
+        try { stmtMig.executeUpdate("ALTER TABLE bookings ADD COLUMN condition_note TEXT NULL"); } catch(Exception e){}
+        try { stmtMig.executeUpdate("ALTER TABLE bookings ADD COLUMN late_fee DOUBLE DEFAULT 0.0"); } catch(Exception e){}
+        // 3. User updates
+        try { stmtMig.executeUpdate("ALTER TABLE users ADD COLUMN trust_score INT DEFAULT 0"); } catch(Exception e){}
+        try { stmtMig.executeUpdate("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT FALSE"); } catch(Exception e){}
+    } catch (Exception e) { e.printStackTrace(); } finally { if(stmtMig!=null)stmtMig.close(); if(conMig!=null)conMig.close(); }
+    
+    HttpSession sessionObj = request.getSession(false);
+    if (sessionObj == null || sessionObj.getAttribute("userId") == null) {
+        response.sendRedirect("login.jsp");
+        return;
+    }
+    Integer userId = (Integer) sessionObj.getAttribute("userId");
+    String role = (String) sessionObj.getAttribute("userRole");
+    String userName = (String) sessionObj.getAttribute("userName");
+    String userImage = (String) sessionObj.getAttribute("userImage");
+    if(userImage == null || userImage.isEmpty()) userImage = "default_profile.png";
+    int unreadNotifications = 0;
+    boolean isVerified = false;
+    try (Connection con = DBConnection.getConnection()) {
+        // Fetch Notifications
+        try (PreparedStatement ps = con.prepareStatement("SELECT COUNT(*) FROM notifications WHERE user_id=? AND is_read=0")) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) unreadNotifications = rs.getInt(1);
+            }
+        }
+        // Fetch Trust Status
+        try (PreparedStatement ps2 = con.prepareStatement("SELECT is_verified FROM users WHERE id=?")) {
+            ps2.setInt(1, userId);
+            try (ResultSet rs2 = ps2.executeQuery()) {
+                if (rs2.next()) isVerified = rs2.getBoolean("is_verified");
+            }
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+%>
                     <!DOCTYPE html>
                     <html lang="en">
 
@@ -149,6 +183,22 @@
                                     margin-left: 0;
                                 }
                             }
+
+                            /* Dashboard Profile Pic */
+                            .welcome-avatar {
+                                width: 85px;
+                                height: 85px;
+                                border-radius: 50%;
+                                border: 4px solid var(--secondary);
+                                overflow: hidden;
+                                box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                                flex-shrink: 0;
+                            }
+                            .welcome-avatar img {
+                                width: 100%;
+                                height: 100%;
+                                object-fit: cover;
+                            }
                         </style>
                     </head>
 
@@ -156,14 +206,35 @@
                         <jsp:include page="layout/sidebar.jsp" />
                         <div class="main-content">
                             <div class="dashboard-container">
-                                <div class="welcome-section">
-                                    <p>Welcome back,</p>
-                                    <h1>
-                                        <%= userName %>
-                                    </h1>
-                                    <span class="role-badge">
-                                        <%= role %> Account
-                                    </span>
+                                <div class="welcome-section"
+                                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; gap: 20px;">
+                                    <div style="display: flex; align-items: center; gap: 25px;">
+                                        <div class="welcome-avatar">
+                                            <img src="<%=request.getContextPath()%>/images/profiles/<%=userImage%>" 
+                                                 alt="Profile" 
+                                                 onerror="this.src='<%=request.getContextPath()%>/images/default_profile.png'">
+                                        </div>
+                                        <div>
+                                            <p style="margin: 0; color: #64748b; font-size: 16px;">Welcome back,</p>
+                                            <h1 style="margin: 5px 0; font-size: 32px; color: #0f766e; display: flex; align-items: center; gap: 10px;">
+                                                <%= userName %>
+                                                <% if(isVerified) { %>
+                                                    <span title="Verified User" style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; background:#14b8a6; color:white; border-radius:50%; font-size:12px; box-shadow:0 2px 4px rgba(20, 184, 166, 0.3);">✓</span>
+                                                <% } %>
+                                            </h1>
+                                            <span class="role-badge"
+                                                style="background: #14b8a6; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; text-transform: uppercase;">
+                                                <%= role %> Account
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <a href="<%=request.getContextPath()%>/LogoutServlet"
+                                        style="background: #ef4444; color: white; text-decoration: none; padding: 12px 25px; border-radius: 12px; font-weight: 700; display: flex; align-items: center; gap: 10px; transition: 0.3s; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);"
+                                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 15px rgba(239, 68, 68, 0.3)';"
+                                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(239, 68, 68, 0.2)';"
+                                        onclick="return confirm('Are you sure you want to logout?');">
+                                        <span style="font-size: 20px;">🚪</span> Logout
+                                    </a>
                                 </div>
 
                                 <div class="grid">
@@ -191,6 +262,24 @@
                                             <% } %>
                                     </a>
 
+                                    <!-- Community Leaderboard -->
+                                    <div class="action-card" style="grid-column: span 1; background: linear-gradient(135deg, #0f766e, #14b8a6); color: white;">
+                                        <div class="card-icon" style="background: rgba(255,255,255,0.2); color: white;">🏆</div>
+                                        <h3>Top Neighbors</h3>
+                                        <div style="width: 100%; margin-top: 10px;">
+                                            <% 
+                                                try (Connection conLeader = DBConnection.getConnection();
+                                                     Statement stmtLeader = conLeader.createStatement();
+                                                     ResultSet rsLeader = stmtLeader.executeQuery("SELECT name, trust_score FROM users ORDER BY trust_score DESC LIMIT 3")) {
+                                                    while(rsLeader.next()) { %>
+                                                        <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 13px;">
+                                                            <span>👤 <%= rsLeader.getString("name") %></span>
+                                                            <span style="font-weight: 700;"><%= rsLeader.getInt("trust_score") %> pts</span>
+                                                        </div>
+                                                <% } } catch(Exception e) {} %>
+                                        </div>
+                                    </div>
+
                                     <!-- Owner Specific Actions -->
                                     <% if ("Owner".equalsIgnoreCase(role)) { %>
                                         <a href="addItem.jsp" class="action-card">
@@ -214,6 +303,14 @@
                                             <p>View confirmed bookings and chat with your borrowers.</p>
                                         </a>
                                         <% } %>
+
+                                            <a href="<%=request.getContextPath()%>/LogoutServlet" class="action-card"
+                                                style="background: #fff5f5; border: 1px solid #fee2e2;">
+                                                <div class="card-icon" style="background: #fee2e2; color: #ef4444;">🚪
+                                                </div>
+                                                <h3>Logout</h3>
+                                                <p>Sign out of your account safely.</p>
+                                            </a>
                                 </div>
                             </div>
                         </div>

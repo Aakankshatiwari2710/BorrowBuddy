@@ -176,28 +176,29 @@
                         </h2>
                     </div>
 
-                    <form action="ProcessPaymentServlet" method="post">
+                    <form action="<%= request.getContextPath() %>/ProcessPaymentServlet" method="post">
                         <input type="hidden" name="bookingId" value="<%= bookingId %>">
                         <input type="hidden" name="amount" value="<%= amount %>">
 
                         <div class="form-group">
                             <label>Cardholder Name</label>
-                            <input type="text" placeholder="John Doe" required>
+                            <input type="text" name="cardName" placeholder="Dhiraj Yadav" required>
                         </div>
 
                         <div class="form-group">
                             <label>Card Number</label>
-                            <input type="text" placeholder="XXXX XXXX XXXX XXXX" maxlength="19" required>
+                            <input type="text" name="cardNumber" placeholder="XXXX XXXX XXXX XXXX" maxlength="19"
+                                required>
                         </div>
 
                         <div class="row">
                             <div class="form-group">
                                 <label>Expiry Date</label>
-                                <input type="text" placeholder="MM/YY" maxlength="5" required>
+                                <input type="text" name="expiry" placeholder="MM/YY" maxlength="5" required>
                             </div>
                             <div class="form-group">
                                 <label>CVV</label>
-                                <input type="password" placeholder="•••" maxlength="3" required>
+                                <input type="password" name="cvv" placeholder="•••" maxlength="3" required>
                             </div>
                         </div>
 
