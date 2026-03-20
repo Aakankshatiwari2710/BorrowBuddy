@@ -5,9 +5,19 @@ services:
     plan: free
     envVars:
       - key: DB_URL
+        value: "jdbc:mysql://${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME}"
+      - key: DATABASE_HOST
         fromDatabase:
           name: sharesphere-db
-          property: connectionString
+          property: host
+      - key: DATABASE_PORT
+        fromDatabase:
+          name: sharesphere-db
+          property: port
+      - key: DATABASE_NAME
+        fromDatabase:
+          name: sharesphere-db
+          property: databaseName
       - key: DB_USER
         fromDatabase:
           name: sharesphere-db
