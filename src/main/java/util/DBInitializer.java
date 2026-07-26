@@ -13,47 +13,85 @@ public class DBInitializer implements ServletContextListener {
     public void contextInitialized(ServletContextEvent sce) {
         System.out.println("Starting ShareSphere DB Migration/Optimization...");
         
-        try {
-            Connection con = DBConnection.getConnection();
+        try (Connection con = DBConnection.getConnection()) {
             if (con != null) {
                 try (Statement stmt = con.createStatement()) {
-                    // 1. Create Reviews table
-                    stmt.executeUpdate("CREATE TABLE IF NOT EXISTS reviews (id INT AUTO_INCREMENT PRIMARY KEY, item_id INT, reviewer_id INT, rating INT, comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
-                    
-                    // 2. Bookings updates (Columns add logic)
-                    try { stmt.executeUpdate("ALTER TABLE bookings ADD COLUMN rating_id INT NULL"); } catch(Exception e){}
-                    try { stmt.executeUpdate("ALTER TABLE bookings ADD COLUMN condition_note TEXT NULL"); } catch(Exception e){}
-                    try { stmt.executeUpdate("ALTER TABLE bookings ADD COLUMN late_fee DOUBLE DEFAULT 0.0"); } catch(Exception e){}
-                    try { stmt.executeUpdate("ALTER TABLE bookings ADD COLUMN shipping_address TEXT NULL"); } catch(Exception e){}
-                    try { stmt.executeUpdate("ALTER TABLE bookings ADD COLUMN shipping_city VARCHAR(100) NULL"); } catch(Exception e){}
-                    try { stmt.executeUpdate("ALTER TABLE bookings ADD COLUMN shipping_pincode VARCHAR(20) NULL"); } catch(Exception e){}
-                    try { stmt.executeUpdate("ALTER TABLE bookings ADD COLUMN shipping_phone VARCHAR(20) NULL"); } catch(Exception e){}
-                    
-                    // 3. User updates
-                    try { stmt.executeUpdate("ALTER TABLE users ADD COLUMN trust_score INT DEFAULT 0"); } catch(Exception e){}
-                    try { stmt.executeUpdate("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT FALSE"); } catch(Exception e){}
-                    try { stmt.executeUpdate("ALTER TABLE users ADD COLUMN profile_image VARCHAR(255) DEFAULT 'default_profile.png'"); } catch(Exception e){}
-                    try { stmt.executeUpdate("ALTER TABLE users ADD COLUMN otp_code VARCHAR(10) NULL"); } catch(Exception e){}
-                    try { stmt.executeUpdate("ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT FALSE"); } catch(Exception e){}
-                    try { stmt.executeUpdate("ALTER TABLE items ADD COLUMN offer_tag VARCHAR(100) DEFAULT ''"); } catch(Exception e){}
-                    try { stmt.executeUpdate("ALTER TABLE items ADD COLUMN stock_status VARCHAR(20) DEFAULT 'In Stock'"); } catch(Exception e){}
-                    
-                    // 4. Schema verification complete
+                    // 1. Create Users Table
+                    stmt.executeUpdate("CREATE TABLE IF NOT EXISTS users ("
+                            + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                            + "name VARCHAR(100) NOT NULL, "
+                            + "email VARCHAR(100) UNIQUE NOT NULL, "
+                            + "password VARCHAR(255) NOT NULL, "
+                            + "location VARCHAR(100), "
+                            + "role VARCHAR(20) NOT NULL, "
+                            + "trust_score INT DEFAULT 0, "
+                            + "is_verified BOOLEAN DEFAULT FALSE, "
+                            + "profile_image VARCHAR(255) DEFAULT 'default_profile.png', "
+                            + "otp_code VARCHAR(10) NULL, "
+                            + "email_verified BOOLEAN DEFAULT FALSE, "
+                            + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+
+                    // 2. Create Items Table
+                    stmt.executeUpdate("CREATE TABLE IF NOT EXISTS items ("
+                            + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                            + "name VARCHAR(100) NOT NULL, "
+                            + "description TEXT, "
+                            + "price DOUBLE NOT NULL, "
+                            + "category VARCHAR(50), "
+                            + "image VARCHAR(255), "
+                            + "owner_email VARCHAR(100) NOT NULL, "
+                            + "offer_tag VARCHAR(100) DEFAULT '', "
+                            + "stock_status VARCHAR(20) DEFAULT 'In Stock', "
+                            + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+
+                    // 3. Create Bookings Table
+                    stmt.executeUpdate("CREATE TABLE IF NOT EXISTS bookings ("
+                            + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                            + "borrower_id INT NOT NULL, "
+                            + "item_id INT NOT NULL, "
+                            + "start_date DATE NOT NULL, "
+                            + "end_date DATE NOT NULL, "
+                            + "status VARCHAR(20) DEFAULT 'Pending', "
+                            + "payment_status VARCHAR(20) DEFAULT 'Unpaid', "
+                            + "rating_id INT NULL, "
+                            + "condition_note TEXT NULL, "
+                            + "late_fee DOUBLE DEFAULT 0.0, "
+                            + "shipping_address TEXT NULL, "
+                            + "shipping_city VARCHAR(100) NULL, "
+                            + "shipping_pincode VARCHAR(20) NULL, "
+                            + "shipping_phone VARCHAR(20) NULL, "
+                            + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+
+                    // 4. Create Notifications Table
+                    stmt.executeUpdate("CREATE TABLE IF NOT EXISTS notifications ("
+                            + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                            + "user_id INT NOT NULL, "
+                            + "message TEXT NOT NULL, "
+                            + "type VARCHAR(20) DEFAULT 'GENERAL', "
+                            + "is_read BOOLEAN DEFAULT FALSE, "
+                            + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+
+                    // 5. Create Reviews Table
+                    stmt.executeUpdate("CREATE TABLE IF NOT EXISTS reviews ("
+                            + "id INT AUTO_INCREMENT PRIMARY KEY, "
+                            + "item_id INT, "
+                            + "reviewer_id INT, "
+                            + "rating INT, "
+                            + "comment TEXT, "
+                            + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+
                     System.out.println("✅ ShareSphere DB Schema Verified & Ready!");
-                } finally {
-                    try { con.close(); } catch(Exception e) {}
                 }
             } else {
                 System.err.println("⚠️ DB Connection is null. Skipping startup DB initialization.");
             }
-        } catch (Throwable t) {
-            System.err.println("❌ DBInitializer caught an exception: " + t.getMessage());
-            t.printStackTrace();
+        } catch (Exception e) {
+            System.err.println("❌ Error initializing ShareSphere DB: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
-        // Cleanup if needed
     }
 }
