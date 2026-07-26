@@ -28,43 +28,26 @@ public class EmailUtil {
             try {
                 sendEmailSync(toEmail, subject, htmlContent);
             } catch (Exception e) {
-                System.err.println("📧 [JavaMail Failed] Target: " + toEmail + " | Subject: " + subject + " | Error: " + e.getMessage());
+                System.err.println("❌ [JavaMail Error] Failed to send email to: " + toEmail + " | Error: " + e.getMessage());
                 e.printStackTrace();
             }
         });
     }
 
     /**
-     * Send email synchronously with Port 465 / 587 cloud fallback
+     * Send email synchronously with STARTTLS and debug logging
      */
     public static void sendEmailSync(String toEmail, String subject, String htmlContent) throws Exception {
-        try {
-            sendEmailInternal(toEmail, subject, htmlContent, "465", true);
-        } catch (Exception e1) {
-            System.err.println("⚠️ Port 465 email failed, retrying on Port 587... Error: " + e1.getMessage());
-            sendEmailInternal(toEmail, subject, htmlContent, "587", false);
-        }
-    }
-
-    private static void sendEmailInternal(String toEmail, String subject, String htmlContent, String port, boolean isSsl) throws Exception {
         Properties props = new Properties();
-        props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.host", SMTP_HOST);
-        props.put("mail.smtp.port", port);
-        props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
-        props.put("mail.smtp.connectiontimeout", "10000");
-        props.put("mail.smtp.timeout", "10000");
-
-        if (isSsl) {
-            props.put("mail.smtp.socketFactory.port", port);
-            props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
-            props.put("mail.smtp.socketFactory.fallback", "false");
-            props.put("mail.smtp.ssl.enable", "true");
-        } else {
-            props.put("mail.smtp.starttls.enable", "true");
-            props.put("mail.smtp.starttls.required", "true");
-            props.put("mail.smtp.ssl.protocols", "TLSv1.2");
-        }
+        props.put("mail.smtp.port", "587");
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.starttls.required", "true");
+        props.put("mail.smtp.ssl.trust", "*");
+        props.put("mail.smtp.ssl.protocols", "TLSv1.2 TLSv1.3");
+        props.put("mail.smtp.connectiontimeout", "15000");
+        props.put("mail.smtp.timeout", "15000");
 
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
@@ -73,6 +56,8 @@ public class EmailUtil {
             }
         });
 
+        session.setDebug(true);
+
         Message message = new MimeMessage(session);
         message.setFrom(new InternetAddress(SENDER_EMAIL, SENDER_NAME));
         message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
@@ -80,7 +65,7 @@ public class EmailUtil {
         message.setContent(htmlContent, "text/html; charset=utf-8");
 
         Transport.send(message);
-        System.out.println("✅ [JavaMail] Email successfully sent to: " + toEmail + " via Port " + port);
+        System.out.println("✅ [JavaMail Success] Email successfully sent to: " + toEmail);
     }
 
     public static String buildOtpTemplate(String name, String otp) {
@@ -129,7 +114,7 @@ public class EmailUtil {
                "<p>Hi <b>" + name + "</b>,</p>" +
                "<p>Your email has been verified! Welcome to SpanV Studios - your premier destination for luxury ethnic wear and designer boutique collections.</p>" +
                "<p>You can now browse exclusive designer sarees, kurtis, and lehengas or place booking requests directly from your dashboard.</p>" +
-               "<center><a href='https://spanv-studios.onrender.com/login.jsp' class='btn'>Explore Collection Now &rarr;</a></center>" +
+               "<center><a href='https://spanv-studios-1.onrender.com/login.jsp' class='btn'>Explore Collection Now &rarr;</a></center>" +
                "</div>" +
                "<div class='footer'>SpanV Studios &bull; Premium Ethnic Collection</div>" +
                "</div></body></html>";
