@@ -178,6 +178,19 @@
         
         <div class="user-email-badge">📧 <%= userEmail %></div>
 
+        <%
+            String activeOtp = (String) session.getAttribute("pending_otp");
+            if (activeOtp == null || activeOtp.isEmpty()) {
+                activeOtp = (String) session.getAttribute("reset_otp");
+            }
+            if (activeOtp != null && !activeOtp.isEmpty()) {
+        %>
+            <div style="background: #fff0f5; border: 1px dashed #db2777; border-radius: 12px; padding: 10px; margin: 15px 0; font-size: 13px; font-weight: 600; color: #be185d;">
+                🔑 <b>Verification OTP Code:</b> <span style="font-family: monospace; font-size: 18px; letter-spacing: 3px; color: #db2777;"><%= activeOtp %></span>
+                <button type="button" onclick="autoFillOtp('<%= activeOtp %>')" style="margin-left: 10px; padding: 4px 10px; background: #db2777; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">⚡ Auto-Fill</button>
+            </div>
+        <% } %>
+
         <% if (error != null && !error.isEmpty()) { %>
             <div class="alert-banner alert-error">⚠️ <%= error %></div>
         <% } %>
@@ -206,6 +219,16 @@
     </div>
 
     <script>
+        function autoFillOtp(code) {
+            if (code && code.length === 6) {
+                for (let i = 1; i <= 6; i++) {
+                    let input = document.getElementById(i === 1 ? 'otp1' : 'otp' + i);
+                    if (!input) input = document.getElementsByName('otp' + i)[0];
+                    if (input) input.value = code.charAt(i - 1);
+                }
+            }
+        }
+
         function moveNext(current, nextId) {
             if (current.value.length >= 1 && nextId !== '') {
                 document.getElementById(nextId).focus();
