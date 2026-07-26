@@ -9,11 +9,19 @@ import javax.mail.internet.MimeMessage;
 
 public class EmailUtil {
 
-    // Default Email Configurations for SpanV Studios
+    // Default Email Configurations for SpanV Studios (Environment Variable Fallback)
     private static final String SMTP_HOST = "smtp.gmail.com";
-    private static final String SENDER_EMAIL = "spandanav2606@gmail.com";
-    private static final String SENDER_PASSWORD = "asucwkpwwkxcjhoe";
     private static final String SENDER_NAME = "SpanV Studios";
+
+    private static String getSenderEmail() {
+        String envEmail = System.getenv("SENDER_EMAIL");
+        return (envEmail != null && !envEmail.trim().isEmpty()) ? envEmail : "spandanav2606@gmail.com";
+    }
+
+    private static String getSenderPassword() {
+        String envPass = System.getenv("SENDER_PASSWORD");
+        return (envPass != null && !envPass.trim().isEmpty()) ? envPass : "asucwkpwwkxcjhoe";
+    }
 
     // Async thread pool so web requests never lag
     private static final ExecutorService executor = Executors.newFixedThreadPool(5);
@@ -38,6 +46,9 @@ public class EmailUtil {
      * Send email synchronously with STARTTLS and debug logging
      */
     public static void sendEmailSync(String toEmail, String subject, String htmlContent) throws Exception {
+        final String senderEmail = getSenderEmail();
+        final String senderPass = getSenderPassword();
+
         Properties props = new Properties();
         props.put("mail.smtp.host", SMTP_HOST);
         props.put("mail.smtp.port", "587");
@@ -52,20 +63,20 @@ public class EmailUtil {
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(SENDER_EMAIL, SENDER_PASSWORD);
+                return new PasswordAuthentication(senderEmail, senderPass);
             }
         });
 
         session.setDebug(true);
 
         Message message = new MimeMessage(session);
-        message.setFrom(new InternetAddress(SENDER_EMAIL, SENDER_NAME));
+        message.setFrom(new InternetAddress(senderEmail, SENDER_NAME));
         message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
         message.setSubject(subject);
         message.setContent(htmlContent, "text/html; charset=utf-8");
 
         Transport.send(message);
-        System.out.println("✅ [JavaMail Success] Email successfully sent to: " + toEmail);
+        System.out.println("✅ [JavaMail Success] Email successfully sent to: " + toEmail + " via " + senderEmail);
     }
 
     public static String buildOtpTemplate(String name, String otp) {
@@ -94,7 +105,7 @@ public class EmailUtil {
                "<div class='otp-box'><div class='otp-code'>" + otp + "</div></div>" +
                "<p>This code will expire in <b>10 minutes</b>. Please do not share this OTP code with anyone.</p>" +
                "</div>" +
-               "<div class='footer'>SpanV Studios &bull; Premium Ethnic & Boutique Collection<br>Support: +91 7899978229 | spandanav2606@gmail.com</div>" +
+               "<div class='footer'>SpanV Studios &bull; Premium Ethnic & Boutique Collection<br>Support: +91 7899978229 | " + getSenderEmail() + "</div>" +
                "</div></body></html>";
     }
 
