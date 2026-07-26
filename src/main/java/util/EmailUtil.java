@@ -9,26 +9,24 @@ import javax.mail.internet.MimeMessage;
 
 public class EmailUtil {
 
-    // Default Email Configurations for SpanV Studios (Environment Variable Fallback)
+    // Default Email Configurations for SpanV Studios
     private static final String SMTP_HOST = "smtp.gmail.com";
+    private static final String SENDER_EMAIL = "sakshitiwari0627@gmail.com";
+    private static final String SENDER_PASSWORD = "zzynwhligrsbanaz";
     private static final String SENDER_NAME = "SpanV Studios";
 
-    private static String getSenderEmail() {
+    public static String getSenderEmail() {
         String envEmail = System.getenv("SENDER_EMAIL");
-        return (envEmail != null && !envEmail.trim().isEmpty()) ? envEmail : "spandanav2606@gmail.com";
+        return (envEmail != null && !envEmail.trim().isEmpty()) ? envEmail : SENDER_EMAIL;
     }
 
-    private static String getSenderPassword() {
+    public static String getSenderPassword() {
         String envPass = System.getenv("SENDER_PASSWORD");
-        return (envPass != null && !envPass.trim().isEmpty()) ? envPass : "asucwkpwwkxcjhoe";
+        return (envPass != null && !envPass.trim().isEmpty()) ? envPass : SENDER_PASSWORD;
     }
 
-    // Async thread pool so web requests never lag
     private static final ExecutorService executor = Executors.newFixedThreadPool(5);
 
-    /**
-     * Send HTML email in background thread
-     */
     public static void sendEmailAsync(final String toEmail, final String subject, final String htmlContent) {
         if (toEmail == null || toEmail.trim().isEmpty()) return;
 
@@ -42,9 +40,6 @@ public class EmailUtil {
         });
     }
 
-    /**
-     * Send email synchronously with STARTTLS and debug logging
-     */
     public static void sendEmailSync(String toEmail, String subject, String htmlContent) throws Exception {
         final String senderEmail = getSenderEmail();
         final String senderPass = getSenderPassword();
@@ -77,6 +72,16 @@ public class EmailUtil {
 
         Transport.send(message);
         System.out.println("✅ [JavaMail Success] Email successfully sent to: " + toEmail + " via " + senderEmail);
+    }
+
+    public static void main(String[] args) {
+        try {
+            System.out.println("Testing live email dispatch to aakankshatiwari2710@gmail.com...");
+            sendEmailSync("aakankshatiwari2710@gmail.com", "SpanV Studios Verification Test OTP: 739201", buildOtpEmailTemplate("Aakanksha", "739201"));
+            System.out.println("🎉 SUCCESS! Live email delivered!");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static String buildOtpTemplate(String name, String otp) {
