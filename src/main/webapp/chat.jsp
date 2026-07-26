@@ -13,16 +13,16 @@
                     <head>
                         <meta charset="UTF-8">
                         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <title>Chat | BorrowBuddy</title>
+                        <title>Chat | SpanV Studios</title>
                         <link
                             href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
                             rel="stylesheet">
                         <style>
                             :root {
-                                --primary: #0f766e;
-                                --secondary: #14b8a6;
-                                --bg: #f8fafc;
-                                --text: #1e293b;
+                                --primary: #db2777;
+                                --secondary: #be185d;
+                                --bg: #fff1f2;
+                                --text: #2d0b1e;
                             }
 
                             body {
@@ -214,70 +214,110 @@
                                     String currentUserImage = (String) session.getAttribute("userImage");
                                     if(currentUserImage == null || currentUserImage.isEmpty()) currentUserImage = "default_profile.png";
                                     
-                                    String otherUserName="User" ; String otherUserRole="" ; String otherUserLocation="" ; String otherUserImage="default_profile.png";
-                                    try (Connection con=DBConnection.getConnection()) { String
-                                    uq="SELECT name, role, location, image FROM users WHERE id=?" ; try (PreparedStatement
-                                    ups=con.prepareStatement(uq)) { ups.setInt(1, otherUser); try (ResultSet
-                                    urs=ups.executeQuery()) { if (urs.next()) { otherUserName=urs.getString("name");
-                                    otherUserRole=urs.getString("role"); otherUserLocation=urs.getString("location"); 
-                                    String img = urs.getString("image");
-                                    if(img != null && !img.isEmpty()) otherUserImage = img;
-                                    }
-                                    } } } catch(Exception e) { e.printStackTrace(); } %>
+                                    String otherUserName = "User"; 
+                                    String otherUserRole = ""; 
+                                    String otherUserLocation = ""; 
+                                    String otherUserImage = "default_profile.png";
+                                    
+                                    try (Connection con = DBConnection.getConnection()) { 
+                                        String uq = "SELECT name, role, location, profile_image FROM users WHERE id=?"; 
+                                        try (PreparedStatement ups = con.prepareStatement(uq)) { 
+                                            ups.setInt(1, otherUser); 
+                                            try (ResultSet urs = ups.executeQuery()) { 
+                                                if (urs.next()) { 
+                                                    otherUserName = urs.getString("name");
+                                                    otherUserRole = urs.getString("role"); 
+                                                    otherUserLocation = urs.getString("location"); 
+                                                    String img = urs.getString("profile_image");
+                                                    if(img != null && !img.isEmpty()) otherUserImage = img;
+                                                }
+                                            } 
+                                        } 
+                                    } catch(Exception e) { 
+                                        e.printStackTrace(); 
+                                    } 
+                                %>
                                     <div class="chat-header">
                                         <div style="display: flex; align-items: center; gap: 15px;">
-                                            <div
-                                                style="width: 45px; height: 45px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                            <div style="width: 50px; height: 50px; border-radius: 50%; overflow: hidden; border: 2px solid var(--secondary); box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
                                                 <img src="<%=request.getContextPath()%>/images/profiles/<%=otherUserImage%>" 
                                                      alt="Profile" 
                                                      style="width: 100%; height: 100%; object-fit: cover;"
                                                      onerror="this.src='<%=request.getContextPath()%>/images/default_profile.png'">
                                             </div>
                                             <div>
-                                                <h3>
-                                                    <%= otherUserName !=null && !otherUserName.trim().isEmpty() ?
-                                                        otherUserName : "Unknown User" %> <span
-                                                            style="font-size: 13px; font-weight: 500; color: #fff; background: var(--secondary); padding: 2px 8px; border-radius: 12px; margin-left: 8px; vertical-align: middle;">
+                                                <h3 style="margin: 0; color: #0f766e; font-weight: 800; font-size: 22px; display: flex; align-items: center; gap: 12px;">
+                                                    <span style="color: #0f766e;">
+                                                        <%= (otherUserName != null && !otherUserName.trim().isEmpty()) ? otherUserName : "Neighbour" %>
+                                                    </span>
+                                                    <% if(otherUserRole != null && !otherUserRole.isEmpty()) { %>
+                                                        <span style="font-size: 11px; color: white; background: #14b8a6; padding: 4px 12px; border-radius: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">
                                                             <%= otherUserRole %>
                                                         </span>
+                                                    <% } %>
                                                 </h3>
-                                                <p style="margin: 5px 0 0; font-size: 13px; color: #64748b;">📍 <%=
-                                                        otherUserLocation !=null && !otherUserLocation.isEmpty() ?
-                                                        otherUserLocation : "Location unknown" %>
+                                                <p style="margin: 5px 0 0; font-size: 13px; color: #64748b; font-weight: 500; display: flex; align-items: center; gap: 5px;">
+                                                    <span style="color: #f43f5e;">📍</span> <%= (otherUserLocation != null && !otherUserLocation.isEmpty()) ? otherUserLocation : "Location unknown" %>
                                                 </p>
                                             </div>
                                         </div>
-                                        <a href="dashboard.jsp"
-                                            style="text-decoration: none; font-size: 14px; color: var(--primary); font-weight: 600;">←
-                                            Back</a>
+                                        <a href="dashboard.jsp" style="text-decoration: none; font-size: 14px; color: var(--primary); font-weight: 600; display: flex; align-items: center; gap: 5px; transition: 0.3s;"
+                                           onmouseover="this.style.color='var(--secondary)'" onmouseout="this.style.color='var(--primary)'">
+                                           <span>←</span> Back to Dashboard
+                                        </a>
                                     </div>
 
                                     <div class="messages-area" id="msgArea">
-                                        <% try (Connection con=DBConnection.getConnection()) { String
-                                            q="SELECT * FROM messages WHERE item_id=? AND "
-                                            + "((sender_id=? AND receiver_id=?) OR (sender_id=? AND receiver_id=?)) "
-                                            + "ORDER BY sent_at ASC" ; try (PreparedStatement
-                                            ps=con.prepareStatement(q)) { ps.setInt(1, itemId); ps.setInt(2, userId);
-                                            ps.setInt(3, otherUser); ps.setInt(4, otherUser); ps.setInt(5, userId); try
-                                            (ResultSet rs=ps.executeQuery()) { while(rs.next()){ 
-                                                int senderId = rs.getInt("sender_id");
-                                                String cssClass = (senderId == userId) ? "me" : "other" ; 
-                                                String displayImg = (senderId == userId) ? currentUserImage : otherUserImage;
+                                        <% 
+                                            // Unified Message Query: Dono taraf se messages fetch honge (Chronological order me)
+                                            try (Connection con = DBConnection.getConnection()) {
+                                                String q = "SELECT * FROM messages WHERE item_id = ? AND (" +
+                                                           "(sender_id = ? AND receiver_id = ?) OR " +
+                                                           "(sender_id = ? AND receiver_id = ?)" +
+                                                           ") ORDER BY sent_at ASC";
+                                                
+                                                try (PreparedStatement ps = con.prepareStatement(q)) {
+                                                    ps.setInt(1, itemId);
+                                                    ps.setInt(2, userId);         // Current User as sender
+                                                    ps.setInt(3, otherUser);      // Other User as receiver
+                                                    ps.setInt(4, otherUser);      // Other User as sender
+                                                    ps.setInt(5, userId);         // Current User as receiver
+                                                    
+                                                    try (ResultSet rs = ps.executeQuery()) {
+                                                        boolean hasMessages = false;
+                                                        while(rs.next()){
+                                                            hasMessages = true;
+                                                            int senderId = rs.getInt("sender_id");
+                                                            String cssClass = (senderId == userId) ? "me" : "other"; 
+                                                            String displayImg = (senderId == userId) ? currentUserImage : otherUserImage;
+                                                        %>
+                                                        <div class="msg-row <%= cssClass %>">
+                                                            <div class="msg-avatar">
+                                                                <img src="<%=request.getContextPath()%>/images/profiles/<%= displayImg %>" 
+                                                                     onerror="this.src='<%=request.getContextPath()%>/images/default_profile.png'">
+                                                            </div>
+                                                            <div class="msg">
+                                                                <%= rs.getString("message") %>
+                                                            </div>
+                                                        </div>
+                                                        <%
+                                                        }
+                                                        if (!hasMessages) {
+                                                        %>
+                                                        <div style="text-align: center; padding: 40px; color: #94a3b8;">
+                                                            <p style="font-size: 14px; font-weight: 500;">No messages yet. Start a conversation!</p>
+                                                        </div>
+                                                        <%
+                                                        }
+                                                    }
+                                                }
+                                            } catch(Exception e) {
+                                                e.printStackTrace();
                                             %>
-                                            <div class="msg-row <%= cssClass %>">
-                                                <div class="msg-avatar">
-                                                    <img src="<%=request.getContextPath()%>/images/profiles/<%= displayImg %>" 
-                                                         onerror="this.src='<%=request.getContextPath()%>/images/default_profile.png'">
+                                                <div style="text-align: center; color: #ef4444; padding: 15px;">
+                                                    Error loading messages: <%= e.getMessage() %>
                                                 </div>
-                                                <div class="msg">
-                                                    <%= rs.getString("message") %>
-                                                </div>
-                                            </div>
-                                            <% } } } } catch(Exception e) { %>
-                                                <div style="text-align: center; color: #ef4444;">Error: <%=
-                                                        e.getMessage() %>
-                                                </div>
-                                                <% } %>
+                                            <% } %>
                                     </div>
 
                                     <div class="chat-input-area">

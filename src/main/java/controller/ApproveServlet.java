@@ -28,55 +28,58 @@ public class ApproveServlet extends HttpServlet {
         try {
             con = DBConnection.getConnection();
 
-            // 1️⃣ Get borrower_id and end_date from booking
+            // 1. Get borrower_id, customer email, name, item details, shipping address from booking
             ps1 = con.prepareStatement(
-                "SELECT borrower_id, end_date FROM bookings WHERE id=?"
+                "SELECT b.borrower_id, u.email AS cust_email, u.name AS cust_name, i.name AS item_name, i.price AS item_price, " +
+                "b.shipping_address, b.shipping_city, b.shipping_pincode, b.shipping_phone, b.condition_note " +
+                "FROM bookings b JOIN users u ON b.borrower_id = u.id JOIN items i ON b.item_id = i.id WHERE b.id=?"
             );
             ps1.setInt(1, bookingId);
             rs = ps1.executeQuery();
 
             int borrowerId = 0;
-            Timestamp endDate = null;
+            String custEmail = "";
+            String custName = "";
+            String itemName = "Product";
+            double itemPrice = 0.0;
+            String addr = "", city = "", pin = "", phone = "", note = "";
+
             if (rs.next()) {
                 borrowerId = rs.getInt("borrower_id");
-                endDate = rs.getTimestamp("end_date");
+                custEmail = rs.getString("cust_email");
+                custName = rs.getString("cust_name");
+                itemName = rs.getString("item_name");
+                itemPrice = rs.getDouble("item_price");
+                addr = rs.getString("shipping_address");
+                city = rs.getString("shipping_city");
+                pin = rs.getString("shipping_pincode");
+                phone = rs.getString("shipping_phone");
+                note = rs.getString("condition_note");
             }
 
-            // 2️⃣ Update booking status and late fee if returned
-            double lateFee = 0.0;
-            if ("Returned".equalsIgnoreCase(action) && endDate != null) {
-                long now = System.currentTimeMillis();
-                long end = endDate.getTime();
-                if (now > end) {
-                    long diffMs = now - end;
-                    long diffHours = (long) Math.ceil(diffMs / (1000.0 * 60 * 60));
-                    lateFee = diffHours * 50.0; // ₹50 per hour
-                }
-                
-                ps2 = con.prepareStatement(
-                    "UPDATE bookings SET status=?, late_fee=? WHERE id=?"
-                );
-                ps2.setString(1, action);
-                ps2.setDouble(2, lateFee);
-                ps2.setInt(3, bookingId);
-            } else {
-                ps2 = con.prepareStatement(
-                    "UPDATE bookings SET status=? WHERE id=?"
-                );
-                ps2.setString(1, action);
-                ps2.setInt(2, bookingId);
-            }
+            // 2. Update booking status & payment status upon owner approval
+            String payStatusUpdate = "Approved".equalsIgnoreCase(action) ? "Paid" : "Unpaid";
+            ps2 = con.prepareStatement(
+                "UPDATE bookings SET status=?, payment_status=?, late_fee=0.0 WHERE id=?"
+            );
+            ps2.setString(1, action);
+            ps2.setString(2, payStatusUpdate);
+            ps2.setInt(3, bookingId);
             ps2.executeUpdate();
 
-            // 3️⃣ Send notification to customer
+            // 3. Send notification & JavaMail to customer with complete booking info
             String message = "";
 
             if ("Approved".equalsIgnoreCase(action)) {
-                message = "Your booking has been APPROVED";
+                message = "Your order #" + bookingId + " for '" + itemName + "' and payment have been CONFIRMED by SpanV Studios!";
+                if (custEmail != null && !custEmail.isEmpty()) {
+                    util.EmailUtil.sendEmailAsync(custEmail, "SpanV Studios - Order #" + bookingId + " Confirmed! 🎉", 
+                        util.EmailUtil.buildOrderConfirmedTemplate(bookingId, custName, itemName, itemPrice, addr, city, pin, phone, note));
+                }
             } else if ("Rejected".equalsIgnoreCase(action)) {
-                message = "Your booking has been REJECTED";
-            } else if ("Returned".equalsIgnoreCase(action)) {
-                message = "Item returned. Late fee: ₹" + lateFee;
+                message = "Your order has been CANCELLED by owner.";
+            } else {
+                message = "Your order status: " + action;
             }
 
             psNotify = con.prepareStatement(
@@ -84,10 +87,10 @@ public class ApproveServlet extends HttpServlet {
             );
             psNotify.setInt(1, borrowerId);
             psNotify.setString(2, message);
-            psNotify.setString(3, "BOOKING");
+            psNotify.setString(3, "ORDER");
             psNotify.executeUpdate();
 
-            response.sendRedirect("OwnerBookings.jsp");
+            response.sendRedirect("ownerRequests.jsp");
 
         } catch (Exception e) {
             e.printStackTrace();

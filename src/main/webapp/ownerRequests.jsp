@@ -1,4 +1,4 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.sql.*" %>
 <%@ page import="util.DBConnection" %>
 <%@ page session="true" %>
@@ -12,17 +12,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Booking Requests | BorrowBuddy</title>
+    <title>Order Requests | SpanV Studios</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #0f766e; --secondary: #14b8a6; --bg: #f8fafc; --text: #1e293b; }
+        :root { --primary: #db2777; --secondary: #be185d; --bg: #fff1f2; --text: #2d0b1e; }
         body { margin: 0; font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); }
         .main-content { margin-left: 260px; padding: 40px; }
         .header { margin-bottom: 30px; }
         .header h1 { font-size: 28px; margin: 0; color: var(--primary); }
         .header p { color: #64748b; margin-top: 6px; }
-        .table-container { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        table { width: 100%; border-collapse: collapse; }
+        .table-container { background: white; border-radius: 20px; overflow-x: auto; -webkit-overflow-scrolling: touch; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; min-width: 650px; }
         th { background: #f8fafc; padding: 14px 18px; text-align: left; font-size: 12px; color: #64748b; font-weight: 700; border-bottom: 1px solid #f1f5f9; text-transform: uppercase; letter-spacing: 0.5px; }
         td { padding: 14px 18px; border-bottom: 1px solid #f1f5f9; font-size: 14px; vertical-align: middle; }
         tr:last-child td { border-bottom: none; }
@@ -41,23 +41,29 @@
         .btn-chat    { background: #3b82f6; color: white; }
         .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
         .empty-state p { font-size: 16px; }
+
+        @media (max-width: 992px) {
+            .main-content { margin-left: 0 !important; padding: 80px 15px 30px !important; }
+            .header h1 { font-size: 24px; }
+        }
     </style>
 </head>
 <body>
     <jsp:include page="layout/sidebar.jsp" />
     <div class="main-content">
         <div class="header">
-            <h1>Borrowing Requests</h1>
-            <p>Manage people who want to rent your items.</p>
+            <h1>Order Requests</h1>
+            <p>Manage customer orders for your products.</p>
         </div>
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th>Item</th>
-                        <th>Borrower</th>
-                        <th>Email</th>
-                        <th>Duration</th>
+                        <th>Product</th>
+                        <th>Customer</th>
+                        <th>Email / Phone</th>
+                        <th>📦 Delivery Address</th>
+                        <th>UTR Ref</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -67,8 +73,9 @@
     Connection con = null;
     try {
         con = DBConnection.getConnection();
-        String query = "SELECT b.id, b.borrower_id, b.item_id, i.name AS item_name, " +
-            "u.name AS borrower_name, u.email, b.start_date, b.end_date, b.status, b.payment_status " +
+        String query = "SELECT b.id, b.borrower_id, b.item_id, b.condition_note, " +
+            "b.shipping_address, b.shipping_city, b.shipping_pincode, b.shipping_phone, " +
+            "i.name AS item_name, i.price AS item_price, u.name AS borrower_name, u.email, b.start_date, b.end_date, b.status, b.payment_status " +
             "FROM bookings b JOIN items i ON b.item_id = i.id JOIN users u ON b.borrower_id = u.id " +
             "WHERE i.owner_email = ? ORDER BY b.id DESC";
         PreparedStatement ps = con.prepareStatement(query);
@@ -79,6 +86,12 @@
             found = true;
             String status     = rs.getString("status");
             String payStatus  = rs.getString("payment_status");
+            String utrNote    = rs.getString("condition_note");
+            String addr       = rs.getString("shipping_address");
+            String city       = rs.getString("shipping_city");
+            String pin        = rs.getString("shipping_pincode");
+            String phone      = rs.getString("shipping_phone");
+            double price      = rs.getDouble("item_price");
             if (payStatus == null) payStatus = "Unpaid";
             int    bId        = rs.getInt("id");
             int    borrowerId = rs.getInt("borrower_id");
@@ -88,27 +101,50 @@
                     <tr>
                         <td style="font-weight:600;"><%= rs.getString("item_name") %></td>
                         <td><%= rs.getString("borrower_name") %></td>
-                        <td style="color:#64748b;"><%= rs.getString("email") %></td>
+                        <td style="color:#64748b; font-size:13px;">
+                            <%= rs.getString("email") %>
+                            <% if (phone != null && !phone.isEmpty()) { %>
+                                <br><span style="color:#0284c7; font-weight:600;">📞 <%= phone %></span>
+                            <% } %>
+                        </td>
+                        <td style="font-size:13px; color:#334155; max-width:220px;">
+                            <% if (addr != null && !addr.trim().isEmpty()) { %>
+                                📍 <strong><%= addr %></strong><br>
+                                <%= city != null ? city : "" %> <%= pin != null ? ("- " + pin) : "" %>
+                            <% } else { %>
+                                <span style="color:#94a3b8; font-style:italic;">Not provided yet</span>
+                            <% } %>
+                        </td>
                         <td style="font-size:13px;color:#475569;">
-                            <%= rs.getString("start_date") != null ? rs.getString("start_date") : "-" %>
-                            <br>&#10132; <%= rs.getString("end_date") != null ? rs.getString("end_date") : "-" %>
+                            <% if (utrNote != null && utrNote.startsWith("UTR:")) { %>
+                                <span style="background:#e0e7ff; color:#3730a3; font-size:12px; font-weight:700; padding:4px 8px; border-radius:6px; display:inline-block; margin-bottom:4px;"><%= utrNote %></span><br>
+                                <span style="color:#059669; font-weight:700; font-size:12px;">Exact: ₹<%= (int)price %></span>
+                            <% } else { %>
+                                <span style="color:#94a3b8;">Pending UTR (Price: ₹<%= (int)price %>)</span>
+                            <% } %>
                         </td>
                         <td>
                             <span class="status-badge status-<%= status %>"><%= status %></span>
-                            <span class="pay-badge <%= isPaid ? "pay-paid" : "pay-unpaid" %>"><%= isPaid ? "PAID" : "UNPAID" %></span>
+                            <span class="pay-badge <%= isPaid ? "pay-paid" : "pay-unpaid" %>"><%= isPaid ? "PAID" : payStatus %></span>
                         </td>
                         <td>
-                            <a href="chat.jsp?user=<%= borrowerId %>&item=<%= itemId %>" class="btn btn-chat">Chat</a>
-                            <% if ("Pending".equalsIgnoreCase(status)) { %>
-                            <a href="ApproveServlet?id=<%= bId %>&action=Approved" class="btn btn-approve">Approve</a>
-                            <a href="ApproveServlet?id=<%= bId %>&action=Rejected" class="btn btn-reject">Reject</a>
+                            <% if ("Cancelled".equalsIgnoreCase(status) || "Rejected".equalsIgnoreCase(status)) { %>
+                                <span style="color:#ef4444; font-weight:700; font-size:13px;">❌ Cancelled</span>
+                            <% } else if ("Pending".equalsIgnoreCase(status) || "Pending Verification".equalsIgnoreCase(payStatus)) { %>
+                                <a href="ApproveServlet?id=<%= bId %>&action=Approved" class="btn btn-approve">✅ Confirm Payment & Order</a>
+                                <a href="CancelBookingServlet?id=<%= bId %>&redirect=ownerRequests.jsp" class="btn btn-reject" onclick="return confirm('Are you sure you want to cancel this order?');">❌ Cancel Order</a>
+                            <% } else if ("Approved".equalsIgnoreCase(status)) { %>
+                                <span style="color:#10b981; font-weight:700; font-size:13px; margin-right:8px;">✓ Confirmed</span>
+                                <a href="CancelBookingServlet?id=<%= bId %>&redirect=ownerRequests.jsp" class="btn btn-reject" onclick="return confirm('Are you sure you want to cancel this order?');">❌ Cancel Order</a>
+                            <% } else { %>
+                                <span style="color:#10b981; font-weight:700; font-size:13px;">✓ Active</span>
                             <% } %>
                         </td>
                     </tr>
 <%
         }
         if (!found) { %>
-                    <tr><td colspan="6"><div class="empty-state"><p>No booking requests yet.</p></div></td></tr>
+                    <tr><td colspan="6"><div class="empty-state"><p>No order requests yet.</p></div></td></tr>
 <%      }
         rs.close(); ps.close();
     } catch (Exception e) { %>

@@ -1,20 +1,10 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %><%@ page session="true" %><%@ page import="java.sql.*" %><%@ page import="util.DBConnection" %><%
-    Connection conMig = null; Statement stmtMig = null;
-    try {
-        conMig = DBConnection.getConnection(); stmtMig = conMig.createStatement();
-        // 1. Reviews table
-        stmtMig.executeUpdate("CREATE TABLE IF NOT EXISTS reviews (id INT AUTO_INCREMENT PRIMARY KEY, item_id INT, reviewer_id INT, rating INT, comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
-        // 2. Bookings updates
-        try { stmtMig.executeUpdate("ALTER TABLE bookings ADD COLUMN rating_id INT NULL"); } catch(Exception e){}
-        try { stmtMig.executeUpdate("ALTER TABLE bookings ADD COLUMN condition_note TEXT NULL"); } catch(Exception e){}
-        try { stmtMig.executeUpdate("ALTER TABLE bookings ADD COLUMN late_fee DOUBLE DEFAULT 0.0"); } catch(Exception e){}
-        // 3. User updates
-        try { stmtMig.executeUpdate("ALTER TABLE users ADD COLUMN trust_score INT DEFAULT 0"); } catch(Exception e){}
-        try { stmtMig.executeUpdate("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT FALSE"); } catch(Exception e){}
-    } catch (Exception e) { e.printStackTrace(); } finally { if(stmtMig!=null)stmtMig.close(); if(conMig!=null)conMig.close(); }
-    
     HttpSession sessionObj = request.getSession(false);
     if (sessionObj == null || sessionObj.getAttribute("userId") == null) {
+        if (sessionObj != null && sessionObj.getAttribute("userEmail") != null) {
+            response.sendRedirect("verifyOtp.jsp?msg=Please+verify+your+email+address+with+the+6-digit+OTP+code.");
+            return;
+        }
         response.sendRedirect("login.jsp");
         return;
     }
@@ -50,16 +40,16 @@
                     <head>
                         <meta charset="UTF-8">
                         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <title>Dashboard | BorrowBuddy</title>
+                        <title>Dashboard | SpanV Studios</title>
                         <link
                             href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
                             rel="stylesheet">
                         <style>
                             :root {
-                                --primary: #0f766e;
-                                --secondary: #14b8a6;
-                                --bg: #f1f5f9;
-                                --text: #1e293b;
+                                --primary: #db2777;
+                                --secondary: #be185d;
+                                --bg: #fff1f2;
+                                --text: #2d0b1e;
                                 --card-bg: #ffffff;
                             }
 
@@ -74,6 +64,13 @@
                                 padding: 40px;
                                 max-width: 1200px;
                                 margin: 0 auto;
+                            }
+
+                            @media (max-width: 992px) {
+                                .main-content { margin-left: 0 !important; }
+                                .dashboard-container { padding: 80px 15px 30px !important; }
+                                .welcome-section h1 { font-size: 24px; }
+                                .grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 15px; }
                             }
 
                             .welcome-section {
@@ -216,7 +213,7 @@
                                         </div>
                                         <div>
                                             <p style="margin: 0; color: #64748b; font-size: 16px;">Welcome back,</p>
-                                            <h1 style="margin: 5px 0; font-size: 32px; color: #0f766e; display: flex; align-items: center; gap: 10px;">
+                                            <h1 style="margin: 5px 0; font-size: 32px; color: #be185d; display: flex; align-items: center; gap: 10px;">
                                                 <%= userName %>
                                                 <% if(isVerified) { %>
                                                     <span title="Verified User" style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; background:#14b8a6; color:white; border-radius:50%; font-size:12px; box-shadow:0 2px 4px rgba(20, 184, 166, 0.3);">✓</span>
@@ -240,14 +237,14 @@
                                 <div class="grid">
                                     <!-- Common Actions -->
                                     <a href="viewItems.jsp" class="action-card">
-                                        <div class="card-icon">🔍</div>
-                                        <h3>Browse Items</h3>
-                                        <p>Explore tools, gadgets, and more available for rent in your community.</p>
+                                        <div class="card-icon">🛍️</div>
+                                        <h3>Shop Boutique</h3>
+                                        <p>Explore sarees, kurtis, lehengas, and premium ethnic fabrics.</p>
                                     </a>
                                     <a href="myBookings.jsp" class="action-card">
                                         <div class="card-icon">📦</div>
-                                        <h3>My Bookings</h3>
-                                        <p>Track your rental requests and active items you are borrowing.</p>
+                                        <h3>My Purchases</h3>
+                                        <p>Track your orders, shipments, and purchase history.</p>
                                     </a>
 
                                     <a href="notifications.jsp" class="action-card"
@@ -262,45 +259,29 @@
                                             <% } %>
                                     </a>
 
-                                    <!-- Community Leaderboard -->
-                                    <div class="action-card" style="grid-column: span 1; background: linear-gradient(135deg, #0f766e, #14b8a6); color: white;">
-                                        <div class="card-icon" style="background: rgba(255,255,255,0.2); color: white;">🏆</div>
-                                        <h3>Top Neighbors</h3>
-                                        <div style="width: 100%; margin-top: 10px;">
-                                            <% 
-                                                try (Connection conLeader = DBConnection.getConnection();
-                                                     Statement stmtLeader = conLeader.createStatement();
-                                                     ResultSet rsLeader = stmtLeader.executeQuery("SELECT name, trust_score FROM users ORDER BY trust_score DESC LIMIT 3")) {
-                                                    while(rsLeader.next()) { %>
-                                                        <div style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 13px;">
-                                                            <span>👤 <%= rsLeader.getString("name") %></span>
-                                                            <span style="font-weight: 700;"><%= rsLeader.getInt("trust_score") %> pts</span>
-                                                        </div>
-                                                <% } } catch(Exception e) {} %>
-                                        </div>
-                                    </div>
+
 
                                     <!-- Owner Specific Actions -->
                                     <% if ("Owner".equalsIgnoreCase(role)) { %>
                                         <a href="addItem.jsp" class="action-card">
-                                            <div class="card-icon">➕</div>
-                                            <h3>Add New Item</h3>
-                                            <p>List a new item from your storage to start earning through sharing.</p>
+                                            <div class="card-icon">✨</div>
+                                            <h3>Add New Product</h3>
+                                            <p>List a new design in your boutique collection for buyers to purchase.</p>
                                         </a>
                                         <a href="myItems.jsp" class="action-card">
                                             <div class="card-icon">📋</div>
-                                            <h3>My Listed Items</h3>
-                                            <p>Manage the items you've shared with others in the neighborhood.</p>
+                                            <h3>My Collection</h3>
+                                            <p>Manage the sarees, kurtis, and dresses listed in your boutique collection.</p>
                                         </a>
                                         <a href="ownerRequests.jsp" class="action-card">
                                             <div class="card-icon">📋</div>
-                                            <h3>Manage Requests</h3>
-                                            <p>Review, approve, or decline borrowing requests from neighbors.</p>
+                                            <h3>Order Requests</h3>
+                                            <p>Review, approve, or cancel purchase orders from customers.</p>
                                         </a>
                                         <a href="OwnerBookings.jsp" class="action-card">
-                                            <div class="card-icon">💬</div>
-                                            <h3>Bookings & Chats</h3>
-                                            <p>View confirmed bookings and chat with your borrowers.</p>
+                                            <div class="card-icon">🛍️</div>
+                                            <h3>Sales & Orders</h3>
+                                            <p>View confirmed orders and sales history.</p>
                                         </a>
                                         <% } %>
 

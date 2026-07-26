@@ -11,17 +11,17 @@
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>My Profile | BorrowBuddy</title>
+                <title>My Profile | SpanV Studios</title>
                 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
                     rel="stylesheet">
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
                 <style>
                     :root {
-                        --primary: #0f766e;
-                        --primary-light: #14b8a6;
-                        --bg: #f8fafc;
+                        --primary: #db2777;
+                        --primary-light: #be185d;
+                        --bg: #fff1f2;
                         --card-bg: #ffffff;
-                        --text: #1e293b;
+                        --text: #2d0b1e;
                         --text-light: #64748b;
                     }
 

@@ -1,4 +1,4 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.sql.*" %>
 <%@ page import="util.DBConnection" %>
 <%@ page session="true" %>
@@ -13,10 +13,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Listed Items | BorrowBuddy</title>
+    <title>My Collection | SpanV Studios</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #0f766e; --secondary: #14b8a6; --bg: #f8fafc; --text: #1e293b; }
+        :root { --primary: #db2777; --secondary: #be185d; --bg: #fff1f2; --text: #2d0b1e; }
         * { box-sizing: border-box; }
         body { margin: 0; font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); }
         .main-content { margin-left: 260px; padding: 40px; }
@@ -25,8 +25,13 @@
         .header p { color: #64748b; margin: 4px 0 0; font-size: 15px; }
         .btn-add { background: var(--primary); color: white; text-decoration: none; padding: 12px 22px; border-radius: 12px; font-weight: 600; font-size: 15px; transition: 0.3s; }
         .btn-add:hover { background: var(--secondary); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(15,118,110,0.3); }
-        .table-container { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
-        table { width: 100%; border-collapse: collapse; }
+        .table-container { background: white; border-radius: 20px; overflow-x: auto; -webkit-overflow-scrolling: touch; box-shadow: 0 4px 20px rgba(0,0,0,0.06); }
+        table { width: 100%; border-collapse: collapse; min-width: 650px; }
+
+        @media (max-width: 992px) {
+            .main-content { margin-left: 0 !important; padding: 80px 15px 30px !important; }
+            .header h1 { font-size: 24px; }
+        }
         th { background: #f8fafc; padding: 14px 20px; text-align: left; font-size: 12px; color: #64748b; font-weight: 700; border-bottom: 1px solid #f1f5f9; text-transform: uppercase; letter-spacing: 0.5px; }
         td { padding: 14px 20px; border-bottom: 1px solid #f1f5f9; font-size: 14px; vertical-align: middle; }
         tr:last-child td { border-bottom: none; }
@@ -107,10 +112,10 @@
     <div class="main-content">
         <div class="header">
             <div>
-                <h1>&#128230; My Listed Items</h1>
-                <p>Manage the items you are sharing with the community.</p>
+                <h1>🛍️ My Boutique Collection</h1>
+                <p>Manage the premium products listed in your boutique collection.</p>
             </div>
-            <a href="addItem.jsp" class="btn-add">&#43; Add New Item</a>
+            <a href="addItem.jsp" class="btn-add">&#43; Add New Product</a>
         </div>
 
         <div class="table-container">
@@ -118,10 +123,12 @@
                 <thead>
                     <tr>
                         <th>Image</th>
-                        <th>Item Name</th>
+                        <th>Product Name</th>
                         <th>Category</th>
+                        <th>Stock Status</th>
+                        <th>Offer Badge</th>
                         <th>Description</th>
-                        <th>Price / hr</th>
+                        <th>Price (₹)</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -145,6 +152,10 @@
             String itemName  = rs.getString("name");
             String itemCat   = rs.getString("category");
             String itemDesc  = rs.getString("description");
+            String offerTag  = rs.getString("offer_tag");
+            String stockSt   = rs.getString("stock_status");
+            if (stockSt == null || stockSt.isEmpty()) stockSt = "In Stock";
+            boolean isInStock = "In Stock".equalsIgnoreCase(stockSt);
             if (itemDesc == null) itemDesc = "";
             double itemPrice = rs.getDouble("price");
             String shortDesc = itemDesc.length() > 70 ? itemDesc.substring(0, 70) + "..." : itemDesc;
@@ -157,10 +168,24 @@
                         </td>
                         <td style="font-weight:600;"><%= itemName %></td>
                         <td><span class="category-badge"><%= itemCat != null ? itemCat : "—" %></span></td>
+                        <td>
+                            <% if (isInStock) { %>
+                                <span style="background:#dcfce7; color:#15803d; font-size:11px; font-weight:800; padding:4px 10px; border-radius:50px;">🟢 IN STOCK</span>
+                            <% } else { %>
+                                <span style="background:#fee2e2; color:#b91c1c; font-size:11px; font-weight:800; padding:4px 10px; border-radius:50px;">🔴 OUT OF STOCK</span>
+                            <% } %>
+                        </td>
+                        <td>
+                            <% if (offerTag != null && !offerTag.trim().isEmpty()) { %>
+                                <span style="background:#f59e0b; color:white; font-size:11px; font-weight:800; padding:4px 8px; border-radius:6px; text-transform:uppercase;">🏷️ <%= offerTag %></span>
+                            <% } else { %>
+                                <span style="color:#94a3b8; font-size:12px;">Standard</span>
+                            <% } %>
+                        </td>
                         <td style="color:#64748b;"><%= shortDesc %></td>
                         <td class="price-col">&#8377; <%= (int) itemPrice %></td>
                         <td>
-                            <a class="btn-action btn-edit" href="editItem.jsp?id=<%= itemId %>">&#9998; Edit</a>
+                            <a class="btn-action btn-edit" href="editItem.jsp?id=<%= itemId %>">&#9998; Edit Product &amp; Stock</a>
                             <a class="btn-action btn-delete"
                                href="DeleteItemServlet?id=<%= itemId %>"
                                onclick="return confirm('Delete this item? This cannot be undone.');">&#128465; Delete</a>
@@ -176,8 +201,8 @@
                     <tr>
                         <td colspan="6">
                             <div class="empty-state">
-                                <p>You have not listed any items yet.</p>
-                                <a href="addItem.jsp" class="btn-add">&#43; List Your First Item</a>
+                                <p>You have not added any products to your collection yet.</p>
+                                <a href="addItem.jsp" class="btn-add">&#43; Add Your First Product</a>
                             </div>
                         </td>
                     </tr>

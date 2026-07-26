@@ -1,19 +1,14 @@
-# Stage 1: Build the Maven project
-FROM maven:3.9.6-eclipse-temurin-17 AS builder
-WORKDIR /app
-# Copy the pom.xml and download dependencies
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
-# Copy the source code and build the war
-COPY src ./src
-RUN mvn clean package -DskipTests
+# Production Tomcat Container for SpanV Studios
+FROM tomcat:9.0-jdk17-temurin
 
-# Stage 2: Create the Tomcat runtime container
-FROM tomcat:9.0-jdk17
 # Remove default Tomcat webapps
 RUN rm -rf /usr/local/tomcat/webapps/*
-# Copy the built WAR file to ROOT.war so it serves at the root level (/)
-COPY --from=builder /app/target/ROOT.war /usr/local/tomcat/webapps/ROOT.war
 
+# Copy packaged ROOT.war to Tomcat webapps directory
+COPY ROOT.war /usr/local/tomcat/webapps/ROOT.war
+
+# Expose HTTP Port
 EXPOSE 8080
+
+# Run Tomcat Catalina Server
 CMD ["catalina.sh", "run"]

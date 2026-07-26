@@ -28,20 +28,20 @@
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Settings | BorrowBuddy</title>
+                <title>Settings | SpanV Studios</title>
                 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
                     rel="stylesheet">
                 <style>
                     :root {
-                        --bg: #f1f5f9;
+                        --bg: #fff1f2;
                         --card: #ffffff;
-                        --text: #1e293b;
+                        --text: #2d0b1e;
                         --subtext: #64748b;
-                        --border: #e2e8f0;
-                        --primary: #0f766e;
-                        --primary-hover: #115e59;
-                        --accent: #14b8a6;
-                        --toggle-bg: #e2e8f0;
+                        --border: #fbcfe8;
+                        --primary: #db2777;
+                        --primary-hover: #be185d;
+                        --accent: #d97706;
+                        --toggle-bg: #fbcfe8;
                         --toggle-thumb: #ffffff;
                     }
 
@@ -347,39 +347,6 @@
                                     style="color: var(--primary); font-weight: 600; font-size: 14px; text-decoration: none;">Edit
                                     Profile →</a>
                             </div>
-                        </div>
-
-                        <!-- Trust and Verification Card -->
-                        <div class="settings-card">
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
-                                <div style="font-size: 24px;">🛡️</div>
-                                <h2 style="margin:0; font-size:1.5rem;">Trust & Identity</h2>
-                            </div>
-                            <p style="color: var(--subtext); font-size: 14px; margin-bottom: 20px;">Enhance your reliability in the community.</p>
-                            
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(0,0,0,0.03); border-radius: 12px; margin-bottom: 15px;">
-                                <div>
-                                    <span style="font-size: 11px; color: var(--subtext); display: block; text-transform: uppercase; letter-spacing: 0.5px; font-weight:700;">Trust Points</span>
-                                    <span style="font-size: 18px; font-weight: 800; color: var(--primary);"><%= trustScore %> Pts</span>
-                                </div>
-                                <div style="text-align: right;">
-                                    <span style="font-size: 11px; color: var(--subtext); display: block; text-transform: uppercase; letter-spacing: 0.5px; font-weight:700;">Status</span>
-                                    <span style="display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: 10px; font-weight: 900; background: <%= isVerified ? "#ccfbf1" : "#fee2e2" %>; color: <%= isVerified ? "#0f766e" : "#991b1b" %>;">
-                                        <%= isVerified ? "VERIFIED" : "UNVERIFIED" %>
-                                    </span>
-                                </div>
-                            </div>
-                            
-                            <% if(!isVerified) { %>
-                                <button onclick="alert('Verification process started! Please check your email.')" 
-                                        style="width: 100%; padding: 12px; background: var(--primary); border: none; border-radius: 10px; color: white; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2);">
-                                    Verify Identity Now
-                                </button>
-                            <% } else { %>
-                                <div style="text-align: center; padding: 10px; background: #ccfbf1; color: #0f766e; border-radius: 10px; font-size: 13px; font-weight: 700;">
-                                    ✓ Account Fully Verified
-                                </div>
-                            <% } %>
                         </div>
 
                         <!-- Appearance Card -->

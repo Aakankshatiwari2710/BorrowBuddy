@@ -1,22 +1,29 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %><%
+    Integer sessionUserId = (Integer) session.getAttribute("userId");
+    if (sessionUserId != null) {
+        response.sendRedirect("dashboard.jsp");
+        return;
+    }
+%>
     <!DOCTYPE html>
     <html lang="en">
 
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Login | BorrowBuddy</title>
+        <title>Login | SpanV Studios</title>
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
             rel="stylesheet">
 
 
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
         <jsp:include page="layout/global_scripts.jsp" />
         <style>
             :root {
-                --primary: #0f766e;
-                --primary-hover: #115e59;
-                --bg: #f1f5f9;
-                --text: #1e293b;
+                --primary: #db2777;
+                --primary-hover: #be185d;
+                --bg: #fff1f2;
+                --text: #2d0b1e;
                 --card-bg: #ffffff;
             }
 
@@ -135,9 +142,9 @@
 
     <body>
         <div class="login-card">
-            <a href="home.jsp" class="logo">BorrowBuddy</a>
+            <a href="home.jsp" class="logo">✨ SpanV Studios</a>
             <h1>Welcome Back</h1>
-            <p>Log in to access your neighborhood sharing circle.</p>
+            <p>Log in to access your boutique shopping account.</p>
             <% String err=request.getParameter("error"); if(err !=null) { String
                 msg="Login failed. Please check credentials." ; if("wrongpass".equals(err))
                 msg="Incorrect password. Please try again." ; else if("notfound".equals(err))
@@ -147,14 +154,17 @@
                     <%= msg %>
                 </div>
                 <% } %>
-                    <form action="<%=request.getContextPath()%>/LoginServlet" method="post">
+                    <form action="<%=request.getContextPath()%>/LoginServlet" method="post" autocomplete="off">
                         <div class="input-group">
                             <label>Email Address</label>
-                            <input type="email" name="email" placeholder="dhiraj@gmail.com" required>
+                            <input type="email" name="email" id="email_login" placeholder="spandanav2606@gmail.com" required autocomplete="new-password">
                         </div>
                         <div class="input-group">
                             <label>Password</label>
-                            <input type="password" name="password" placeholder="••••••••" required>
+                            <input type="password" name="password" id="password_login" placeholder="••••••••" required autocomplete="new-password">
+                        </div>
+                        <div style="text-align:right; margin-top:-8px; margin-bottom:15px;">
+                            <a href="forgotPassword.jsp" style="color:var(--primary); font-size:13px; font-weight:600; text-decoration:none;">Forgot Password?</a>
                         </div>
                         <button type="submit" class="login-btn">Log In</button>
                     </form>

@@ -10,16 +10,16 @@
                     <head>
                         <meta charset="UTF-8">
                         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                        <title>My Notifications | BorrowBuddy</title>
+                        <title>My Notifications | SpanV Studios</title>
                         <link
                             href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
                             rel="stylesheet">
                         <style>
                             :root {
-                                --primary: #0f766e;
-                                --secondary: #14b8a6;
-                                --bg: #f8fafc;
-                                --text: #1e293b;
+                                --primary: #db2777;
+                                --secondary: #be185d;
+                                --bg: #fff1f2;
+                                --text: #2d0b1e;
                             }
 
                             body {

@@ -21,8 +21,18 @@ public class ProcessPaymentServlet extends HttpServlet {
             return;
         }
 
-        int bookingId = Integer.parseInt(request.getParameter("bookingId"));
+        String bIdStr = request.getParameter("bookingId");
+        if (bIdStr == null || bIdStr.isEmpty()) bIdStr = request.getParameter("booking_id");
+        int bookingId = Integer.parseInt(bIdStr);
+
         String amount = request.getParameter("amount");
+        String paymentRef = request.getParameter("payment_ref");
+        if (paymentRef == null) paymentRef = "UPI Transaction";
+
+        String shipPhone = request.getParameter("shipping_phone");
+        String shipAddress = request.getParameter("shipping_address");
+        String shipCity = request.getParameter("shipping_city");
+        String shipPincode = request.getParameter("shipping_pincode");
 
         Connection con = null;
         PreparedStatement psUpdate = null;
@@ -33,37 +43,58 @@ public class ProcessPaymentServlet extends HttpServlet {
         try {
             con = DBConnection.getConnection();
 
-            // 1. Update Booking Payment Status
+            // 1. Update Booking Payment Status & Shipping Details
             psUpdate = con.prepareStatement(
-                "UPDATE bookings SET payment_status = 'Paid' WHERE id = ?"
+                "UPDATE bookings SET payment_status = 'Pending Verification', condition_note = ?, " +
+                "shipping_address = ?, shipping_city = ?, shipping_pincode = ?, shipping_phone = ? WHERE id = ?"
             );
-            psUpdate.setInt(1, bookingId);
+            psUpdate.setString(1, "UTR: " + paymentRef);
+            psUpdate.setString(2, shipAddress);
+            psUpdate.setString(3, shipCity);
+            psUpdate.setString(4, shipPincode);
+            psUpdate.setString(5, shipPhone);
+            psUpdate.setInt(6, bookingId);
             psUpdate.executeUpdate();
 
-            // 2. Query Owner ID to send notification
+            // 2. Query Owner ID to send notification & Customer Email
             psQuery = con.prepareStatement(
-                "SELECT u.id, i.name, u.name as owner_name FROM bookings b " +
+                "SELECT u.id AS owner_id, u_cust.email AS cust_email, i.name, i.price FROM bookings b " +
                 "JOIN items i ON b.item_id = i.id " +
-                "JOIN users u ON i.owner_email = u.email " +
+                "LEFT JOIN users u ON i.owner_email = u.email " +
+                "LEFT JOIN users u_cust ON b.borrower_id = u_cust.id " +
                 "WHERE b.id = ?"
             );
             psQuery.setInt(1, bookingId);
             rs = psQuery.executeQuery();
 
             if (rs.next()) {
-                int ownerId = rs.getInt("id");
+                int ownerId = rs.getInt("owner_id");
+                String custEmail = rs.getString("cust_email");
                 String itemName = rs.getString("name");
+                double itemPrice = rs.getDouble("price");
+                if (amount == null || amount.isEmpty()) {
+                    amount = String.valueOf((int)itemPrice);
+                }
                 
                 // 3. Notify Owner
-                psNotify = con.prepareStatement(
-                    "INSERT INTO notifications(user_id, message, type, is_read) VALUES (?, ?, 'PAYMENT', 0)"
-                );
-                psNotify.setInt(1, ownerId);
-                psNotify.setString(2, "Payment of ₹" + amount + " received for " + itemName);
-                psNotify.executeUpdate();
+                if (ownerId > 0) {
+                    psNotify = con.prepareStatement(
+                        "INSERT INTO notifications(user_id, message, type, is_read) VALUES (?, ?, 'PAYMENT', 0)"
+                    );
+                    psNotify.setInt(1, ownerId);
+                    psNotify.setString(2, "Customer submitted UPI UTR: " + paymentRef + " for ₹" + amount + " (" + itemName + "). Please verify & confirm.");
+                    psNotify.executeUpdate();
+                }
+
+                // 📧 Send Email Receipt to Customer
+                if (custEmail != null && !custEmail.isEmpty()) {
+                    String fullAddress = (shipAddress != null ? shipAddress : "") + ", " + (shipCity != null ? shipCity : "") + " - " + (shipPincode != null ? shipPincode : "");
+                    util.EmailUtil.sendEmailAsync(custEmail, "SpanV Studios - Order Receipt & Delivery Details", 
+                        util.EmailUtil.buildOrderReceiptTemplate(itemName, itemPrice, "UTR: " + paymentRef, fullAddress));
+                }
             }
 
-            response.sendRedirect("myBookings.jsp?msg=paid");
+            response.sendRedirect("myBookings.jsp?msg=payment_submitted");
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -1,22 +1,30 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%
+    // Clear any previous leftover session when visiting register page
+    if (session.getAttribute("userId") != null) {
+        session.invalidate();
+        session = request.getSession(true);
+    }
+%>
     <!DOCTYPE html>
     <html lang="en">
 
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Sign Up | BorrowBuddy</title>
+        <title>Sign Up | SpanV Studios</title>
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
             rel="stylesheet">
 
 
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
         <jsp:include page="layout/global_scripts.jsp" />
         <style>
             :root {
-                --primary: #0f766e;
-                --primary-hover: #115e59;
-                --bg: #f1f5f9;
-                --text: #1e293b;
+                --primary: #db2777;
+                --primary-hover: #be185d;
+                --bg: #fff1f2;
+                --text: #2d0b1e;
                 --card-bg: #ffffff;
             }
 
@@ -132,20 +140,36 @@
     <body>
 
         <div class="signup-card">
-            <a href="home.jsp" class="logo">BorrowBuddy</a>
+            <a href="home.jsp" class="logo">✨ SpanV Studios</a>
             <h1>Create Account</h1>
-            <p>Join your local verified sharing community.</p>
+            <p>Join our premium boutique shopping community.</p>
+
+            <% String err = request.getParameter("error"); 
+               if(err != null) { 
+                   String msg = "Registration failed. Please try again."; 
+                   if("duplicate_email".equals(err)) {
+                       msg = "This email is already registered."; 
+                   } else if("db_connection_failed".equals(err)) {
+                       msg = "Database connection failed. Please ensure MySQL is running.";
+                   } else if("server_error".equals(err)) {
+                       msg = "Server error occurred. Please try again.";
+                   }
+            %>
+                <div style="background: #fee2e2; color: #ef4444; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; font-weight: 500;">
+                    <%= msg %>
+                </div>
+            <% } %>
 
             <form action="<%=request.getContextPath()%>/RegisterServlet" method="post">
                 <div class="input-grid">
                     <div class="input-group">
                         <label>Full Name</label>
-                        <input type="text" name="name" placeholder="Dhiraj Yadav" required>
+                        <input type="text" name="name" placeholder="SpanV Customer" required>
                     </div>
 
                     <div class="input-group">
                         <label>Email Address</label>
-                        <input type="email" name="email" placeholder="dhiraj@gmail.com" required>
+                        <input type="email" name="email" placeholder="spandanav2606@gmail.com" required>
                     </div>
 
                     <div class="input-group">
@@ -162,13 +186,13 @@
                         <label>I want to...</label>
                         <select name="role" required>
                             <option value="" disabled selected>Select your primary role</option>
-                            <option value="Customer">Borrow items (Customer)</option>
-                            <option value="Owner">Lend items (Owner)</option>
+                            <option value="Customer">Shop & Buy designs (Customer)</option>
+                            <option value="Owner">Sell boutique designs (Owner)</option>
                         </select>
                     </div>
                 </div>
 
-                <button type="submit" class="signup-btn">Join BorrowBuddy</button>
+                <button type="submit" class="signup-btn">Join SpanV Studios</button>
             </form>
 
             <div class="footer-links">

@@ -23,8 +23,9 @@ public class DBConnection {
             if (dbPassword == null) dbPassword = "";
             
             con = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
-            System.out.println("Database Connected Successfully");
+            System.out.println("✅ Database Connected Successfully to: " + dbUrl);
         } catch (Exception e) {
+            System.err.println("❌ Database Connection Failed! Error: " + e.getMessage());
             e.printStackTrace();
         }
         return con;

@@ -8,19 +8,19 @@
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>BorrowBuddy | Modern Neighborhood Sharing</title>
+                    <title>SpanV Studios | Premium Ethnic Fashion</title>
                     <link
                         href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
                         rel="stylesheet">
                     <jsp:include page="layout/global_scripts.jsp" />
                     <style>
                         :root {
-                            --primary: #14b8a6;
-                            --primary-dark: #0f766e;
-                            --dark: #0f172a;
-                            --dark-light: #1e293b;
-                            --bg: #f8fafc;
-                            --accent: #f59e0b;
+                            --primary: #db2777;
+                            --primary-dark: #be185d;
+                            --dark: #2d0b1e;
+                            --dark-light: #471530;
+                            --bg: #fff1f2;
+                            --accent: #d97706;
                         }
 
                         * {
@@ -95,6 +95,10 @@
                             box-shadow: 0 15px 25px rgba(15, 118, 110, 0.3);
                         }
 
+                        .mobile-menu {
+                            display: none;
+                        }
+
                         /* Hero Section */
                         .hero {
                             height: 85vh;
@@ -105,8 +109,8 @@
                             align-items: center;
                             text-align: center;
                             padding: 0 8%;
-                            background: linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.6)),
-                                url('https://images.unsplash.com/photo-1556742044-3c52d6e88c62?auto=format&fit=crop&w=1920&q=80');
+                            background: linear-gradient(rgba(45, 11, 30, 0.65), rgba(45, 11, 30, 0.65)),
+                                url('https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1920&q=80');
                             background-size: cover;
                             background-position: center;
                             background-attachment: fixed;
@@ -431,18 +435,49 @@
                         @media (max-width: 768px) {
                             .footer-grid {
                                 grid-template-columns: 1fr;
+                                gap: 30px;
                             }
 
                             .navbar {
                                 padding: 15px 5%;
+                                position: relative;
+                            }
+
+                            .hero {
+                                padding: 80px 5% 60px;
                             }
 
                             .hero h1 {
-                                font-size: 38px;
+                                font-size: 34px;
+                            }
+
+                            .mobile-menu {
+                                display: block !important;
+                                font-size: 26px;
+                                color: var(--primary);
+                                cursor: pointer;
+                                padding: 5px 10px;
+                                border-radius: 8px;
+                                background: var(--bg);
                             }
 
                             .nav-links {
                                 display: none;
+                                flex-direction: column;
+                                position: absolute;
+                                top: 100%;
+                                left: 0;
+                                right: 0;
+                                background: white;
+                                padding: 20px 5%;
+                                box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+                                border-bottom: 3px solid var(--primary);
+                                gap: 15px;
+                                z-index: 999;
+                            }
+
+                            .nav-links.active {
+                                display: flex !important;
                             }
                         }
                     </style>
@@ -451,12 +486,12 @@
                 <body>
                     <!-- Premium Navbar -->
                     <nav class="navbar">
-                        <a href="home.jsp" class="logo">
-                            <span style="font-size: 30px;">🏠</span> BorrowBuddy
+                        <a href="home.jsp" class="logo" style="display: flex; align-items: center; gap: 10px; text-decoration: none;">
+                            <img src="<%=request.getContextPath()%>/images/spanv_logo.jpg" alt="SpanV Studios" style="height: 42px; border-radius: 6px; object-fit: contain;">
+                            <span style="font-weight: 800; font-size: 22px; color: var(--primary);">SpanV Studios</span>
                         </a>
                         <ul class="nav-links">
-                            <li><a href="viewItems.jsp">Browse Rental</a></li>
-                            <li><a href="#how">How it Works</a></li>
+                            <li><a href="viewItems.jsp">Shop Collection</a></li>
                             <% if(userId==null){ %>
                                 <li><a href="login.jsp">Login</a></li>
                                 <li><a href="register.jsp" class="btn-p">Join Now</a></li>
@@ -465,56 +500,66 @@
                                     <li><a href="profile.jsp" class="btn-p">My Profile</a></li>
                                     <% } %>
                         </ul>
-                        <div class="mobile-menu" style="display: none;">☰</div>
+                        <div class="mobile-menu" onclick="document.querySelector('.nav-links').classList.toggle('active')">☰</div>
                     </nav>
 
                     <!-- Stunning Hero Section -->
                     <section class="hero">
-                        <h1>Borrow Better, <span>Share More</span></h1>
-                        <p>Your premium neighborhood platform for renting high-quality tools, gadgets, and outdoor gear
-                            without the retail price.</p>
+                        <h1>Elegance In Every <span>Weave</span></h1>
+                        <p>Discover our exclusive handpicked collection of designer sarees, kurtis, lehengas, and premium ethnic fabrics crafted for you.</p>
                         <form action="viewItems.jsp" method="get" class="search-box">
-                            <input type="text" name="search" placeholder="What do you need to borrow today?">
+                            <input type="text" name="search" placeholder="Search for Sarees, Kurtis, Lehengas...">
                             <button type="submit">Search</button>
                         </form>
                     </section>
 
                     <!-- Featured Items Grid -->
                     <section class="featured">
-                        <span class="section-tag">Premium Listings</span>
-                        <h2 class="section-title">Rent Locally Today</h2>
+                        <span class="section-tag">Exclusive Collection</span>
+                        <h2 class="section-title">Shop Our Latest Designs</h2>
                         <div class="grid">
-                            <% try (Connection con=DBConnection.getConnection(); Statement st=con.createStatement();
-                                ResultSet rs=st.executeQuery("SELECT * FROM items ORDER BY id DESC LIMIT 3")) { boolean
-                                hasItems=false; while(rs.next()){ hasItems=true; String imgName=rs.getString("image");
-                                if(imgName==null || imgName.isEmpty()) imgName="default.png" ; %>
-                                <div class="card">
-                                    <div class="card-img-wrapper">
-                                        <img src="<%=request.getContextPath()%>/images/<%=imgName%>"
-                                            onerror="this.src='https://images.unsplash.com/photo-1540350394557-8d14678e7f91?auto=format&fit=crop&w=800'">
-                                        <div class="price-chip">₹<%=rs.getDouble("price")%>/hour</div>
-                                    </div>
-                                    <div class="card-body">
-                                        <h3>
-                                            <%=rs.getString("name")%>
-                                        </h3>
-                                        <p>
-                                            <%=rs.getString("description")%>
-                                        </p>
-                                        <a href="viewItems.jsp" class="rent-link">Check Availability →</a>
-                                    </div>
-                                </div>
-                                <% } if(!hasItems){ %>
-                                    <div
-                                        style="grid-column: 1/-1; text-align: center; padding: 50px; background: #fff; border-radius: 20px;">
-                                        <p style="color: #64748b;">No items available right now. Listing your first
-                                            item!</p>
-                                    </div>
-                                    <% } } catch(Exception e) { %>
-                                        <div
-                                            style="grid-column: 1/-1; text-align: center; padding: 40px; color: #ef4444;">
-                                            Unable to load items. Please verify database connection.</div>
-                                        <% } %>
+                            <% 
+                            Connection con = null;
+                            try {
+                                con = DBConnection.getConnection();
+                                if (con != null) {
+                                    try (Statement st = con.createStatement();
+                                         ResultSet rs = st.executeQuery("SELECT * FROM items ORDER BY id DESC LIMIT 3")) {
+                                        boolean hasItems = false;
+                                        while(rs.next()){ 
+                                            hasItems = true; 
+                                            String imgName = rs.getString("image");
+                                            if(imgName == null || imgName.isEmpty()) imgName = "default.png";
+                            %>
+                                            <div class="card">
+                                                <div class="card-img-wrapper">
+                                                    <img src="<%=request.getContextPath()%>/images/<%=imgName%>"
+                                                         onerror="this.src='<%=request.getContextPath()%>/images/default.png'">
+                                                    <div class="price-chip">₹<%= (int)rs.getDouble("price") %></div>
+                                                </div>
+                                                <div class="card-body">
+                                                    <h3><%=rs.getString("name")%></h3>
+                                                    <p><%=rs.getString("description")%></p>
+                                                    <a href="viewItems.jsp" class="rent-link">Buy Now →</a>
+                                                </div>
+                                            </div>
+                            <%          }
+                                        if(!hasItems){ %>
+                                            <div style="grid-column: 1/-1; text-align: center; padding: 50px; background: #fff; border-radius: 20px;">
+                                                <p style="color: #64748b;">No boutique products available right now. Adding our first design soon!</p>
+                                            </div>
+                            <%          }
+                                    }
+                                } else { %>
+                                    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #ef4444;">
+                                        Database server is starting. Please refresh in a moment.</div>
+                            <%  }
+                            } catch(Exception e) { %>
+                                <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #ef4444;">
+                                    Unable to load items. Please verify database connection.</div>
+                            <% } finally {
+                                if (con != null) { try { con.close(); } catch(Exception e) {} }
+                            } %>
                         </div>
                     </section>
 
@@ -522,44 +567,40 @@
                     <footer>
                         <div class="footer-grid">
                             <div class="footer-brand">
-                                <h3>BorrowBuddy</h3>
-                                <p>We are building the largest neighborhood sharing community to make world-class
-                                    equipment accessible to everyone.</p>
+                                <h3>SpanV Studios</h3>
+                                <p>Offering premium ethnic wear and designer ensembles that celebrate tradition and modern elegance.</p>
                                 <div class="social-links">
-                                    <a href="#">f</a> <a href="#">𝕏</a> <a href="#">in</a> <a href="#">ig</a>
+                                    <a href="https://www.instagram.com/spanv_studios/" target="_blank" title="Instagram" style="display:inline-flex; align-items:center; gap:8px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#e1306c;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                                        Instagram
+                                    </a>
                                 </div>
                             </div>
                             <div class="footer-col">
-                                <h4>Marketplace</h4>
+                                <h4>Shop Collection</h4>
                                 <ul>
                                     <li><a href="viewItems.jsp">Browse Catalog</a></li>
-                                    <li><a href="addItem.jsp">List Your Gear</a></li>
-                                    <li><a href="#">Rental Insurance</a></li>
-                                    <li><a href="#">Verified Owners</a></li>
+                                    <li><a href="addItem.jsp">Add New Design</a></li>
+                                    <li><a href="myBookings.jsp">My Orders</a></li>
                                 </ul>
                             </div>
                             <div class="footer-col">
-                                <h4>Resource</h4>
+                                <h4>Reach Us / Contact</h4>
                                 <ul>
-                                    <li><a href="#">Community Story</a></li>
-                                    <li><a href="#">Safety & Trust</a></li>
-                                    <li><a href="#">Success Guide</a></li>
-                                    <li><a href="#">API Documentation</a></li>
-                                </ul>
-                            </div>
-                            <div class="footer-col">
-                                <h4>Reach Us</h4>
-                                <ul>
-                                    <li><a href="#">24/7 Support</a></li>
-                                    <li><a href="#">Report Issue</a></li>
-                                    <li><a href="#">Trust Center</a></li>
-                                    <li><a href="mailto:hello@borrowbuddy.com">hello@borrowbuddy.com</a></li>
+                                    <li>
+                                        <a href="https://www.instagram.com/spanv_studios/" target="_blank" style="display:inline-flex; align-items:center; gap:6px;">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#e1306c;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                                            @spanv_studios
+                                        </a>
+                                    </li>
+                                    <li><a href="mailto:spandanav2606@gmail.com">✉️ spandanav2606@gmail.com</a></li>
+                                    <li><a href="tel:7899978229">📞 +91 7899978229</a></li>
                                 </ul>
                             </div>
                         </div>
                         <div class="footer-bottom">
-                            <p>© 2026 BorrowBuddy Network. Innovating for a shared future.</p>
-                            <p>Designed with ❤️ for People</p>
+                            <p>© 2026 SpanV Studios. Celebrating your elegance.</p>
+                            <p>Handcrafted with ❤️ for SpanV Boutique</p>
                         </div>
                     </footer>
                 </body>

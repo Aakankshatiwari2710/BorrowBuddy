@@ -35,14 +35,33 @@ public class BookItemServlet extends HttpServlet {
         try {
             con = DBConnection.getConnection();
 
-            // Convert 'YYYY-MM-DDTHH:MM' to 'YYYY-MM-DD HH:MM:00'
-            if (startDateStr != null) startDateStr = startDateStr.replace("T", " ") + ":00";
-            if (endDateStr != null) endDateStr = endDateStr.replace("T", " ") + ":00";
+            // Handle direct purchases where dates are empty from frontend
+            if (startDateStr == null || startDateStr.trim().isEmpty() || endDateStr == null || endDateStr.trim().isEmpty()) {
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                String nowStr = sdf.format(new java.util.Date());
+                startDateStr = nowStr;
+                endDateStr = nowStr;
+            } else {
+                startDateStr = startDateStr.replace("T", " ");
+                if (!startDateStr.contains(":")) {
+                    startDateStr += " 00:00:00";
+                } else if (startDateStr.split(":").length == 2) {
+                    startDateStr += ":00";
+                }
+                
+                endDateStr = endDateStr.replace("T", " ");
+                if (!endDateStr.contains(":")) {
+                    endDateStr += " 00:00:00";
+                } else if (endDateStr.split(":").length == 2) {
+                    endDateStr += ":00";
+                }
+            }
 
-            // ✅ 1. INSERT BOOKING
+            // ✅ 1. INSERT BOOKING & GET GENERATED ID
             psBooking = con.prepareStatement(
-                "INSERT INTO bookings (item_id, borrower_id, start_date, end_date, status, payment_status, agreement_accepted, condition_note) " +
-                "VALUES (?, ?, ?, ?, 'Pending', 'Unpaid', 0, ?)"
+                "INSERT INTO bookings (item_id, borrower_id, start_date, end_date, status, payment_status, condition_note) " +
+                "VALUES (?, ?, ?, ?, 'Pending', 'Unpaid', ?)",
+                Statement.RETURN_GENERATED_KEYS
             );
             psBooking.setInt(1, itemId);
             psBooking.setInt(2, borrowerId);
@@ -51,30 +70,40 @@ public class BookItemServlet extends HttpServlet {
             psBooking.setString(5, conditionNote);
             psBooking.executeUpdate();
 
-            // ✅ 2. GET OWNER ID
+            int newBookingId = 0;
+            try (ResultSet rsKeys = psBooking.getGeneratedKeys()) {
+                if (rsKeys.next()) {
+                    newBookingId = rsKeys.getInt(1);
+                }
+            }
+
+            // ✅ 2. GET OWNER ID & NOTIFY
             psOwner = con.prepareStatement(
-                "SELECT u.id, i.name FROM users u " +
-                "JOIN items i ON u.email = i.owner_email " +
+                "SELECT u.id, i.name FROM items i " +
+                "LEFT JOIN users u ON u.email = i.owner_email " +
                 "WHERE i.id=?"
             );
             psOwner.setInt(1, itemId);
             rs = psOwner.executeQuery();
 
-            if(rs.next()){
+            if(rs.next() && rs.getObject("id") != null){
                 int ownerId = rs.getInt("id");
                 String itemName = rs.getString("name");
 
-                // ✅ 3. INSERT NOTIFICATION FOR OWNER
                 psNotify = con.prepareStatement(
                     "INSERT INTO notifications(user_id, message, type, is_read, created_at) VALUES (?, ?, ?, 0, NOW())"
                 );
                 psNotify.setInt(1, ownerId);
-                psNotify.setString(2, "New booking request for item: " + itemName);
-                psNotify.setString(3, "BOOKING");
+                psNotify.setString(2, "New purchase order initiated for: " + itemName);
+                psNotify.setString(3, "ORDER");
                 psNotify.executeUpdate();
             }
 
-            response.sendRedirect("viewItems.jsp?success=booked");
+            if (newBookingId > 0) {
+                response.sendRedirect("payNow.jsp?bookingId=" + newBookingId);
+            } else {
+                response.sendRedirect("myBookings.jsp");
+            }
 
         } catch (Exception e) {
             e.printStackTrace();

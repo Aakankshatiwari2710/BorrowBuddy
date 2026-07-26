@@ -23,8 +23,13 @@ public class AddItemServlet extends HttpServlet {
 
         String name        = request.getParameter("name");
         String description = request.getParameter("description");
+        if (description == null) description = "";
         String price       = request.getParameter("price");
         String category    = request.getParameter("category");
+        String offerTag    = request.getParameter("offer_tag");
+        if (offerTag == null) offerTag = "";
+        String stockStatus = request.getParameter("stock_status");
+        if (stockStatus == null || stockStatus.isEmpty()) stockStatus = "In Stock";
         String ownerEmail  = (String) session.getAttribute("userEmail");
 
         // ── Handle uploaded image ──────────────────────────────────────────
@@ -37,13 +42,13 @@ public class AddItemServlet extends HttpServlet {
                 // sanitize: keep only the simple filename, no path traversal
                 fileName = new File(submitted).getName();
 
-                // 1️⃣ Save to the DEPLOYED images folder (served immediately)
+                // 1. Save to the DEPLOYED images folder (served immediately)
                 String deployedPath = getServletContext().getRealPath("/images");
                 File deployDir = new File(deployedPath);
                 if (!deployDir.exists()) deployDir.mkdirs();
                 filePart.write(deployedPath + File.separator + fileName);
 
-                // 2️⃣ Also copy to SOURCE images folder (survives redeployment)
+                // 2. Also copy to SOURCE images folder (survives redeployment)
                 try {
                     String srcPath = getServletContext().getRealPath("/")
                             .replace("\\tmp0\\wtpwebapps\\ShareSphere\\", "\\ShareSphere\\src\\main\\webapp\\")
@@ -73,8 +78,8 @@ public class AddItemServlet extends HttpServlet {
             con = DBConnection.getConnection();
 
             PreparedStatement ps = con.prepareStatement(
-                "INSERT INTO items (name, description, price, image, owner_email, category) " +
-                "VALUES (?, ?, ?, ?, ?, ?)"
+                "INSERT INTO items (name, description, price, image, owner_email, category, offer_tag, stock_status) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
             );
             ps.setString(1, name);
             ps.setString(2, description);
@@ -82,6 +87,8 @@ public class AddItemServlet extends HttpServlet {
             ps.setString(4, fileName);
             ps.setString(5, ownerEmail);
             ps.setString(6, category);
+            ps.setString(7, offerTag);
+            ps.setString(8, stockStatus);
             ps.executeUpdate();
             ps.close();
 

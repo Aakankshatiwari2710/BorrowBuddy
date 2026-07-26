@@ -182,16 +182,23 @@
         else runTranslation();
     })();
 
-    // 3. PWA Registration
+    // 3. Purge Old Service Workers and Cache
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('SW Registered', reg))
-                .catch(err => console.log('SW Error', err));
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for (let registration of registrations) {
+                registration.unregister();
+            }
         });
+        if ('caches' in window) {
+            caches.keys().then(function(names) {
+                for (let name of names) {
+                    caches.delete(name);
+                }
+            });
+        }
     }
 </script>
 
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0f766e">
-<link rel="apple-touch-icon" href="images/logo_192.png">
+<meta name="theme-color" content="#db2777">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">

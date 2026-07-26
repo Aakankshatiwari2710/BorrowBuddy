@@ -1,4 +1,4 @@
-﻿<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page session="true" %>
 <%
     String role = (String) session.getAttribute("userRole");
@@ -10,10 +10,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add New Item | BorrowBuddy</title>
+    <title>Add New Product | SpanV Studios</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #0f766e; --primary-hover: #115e59; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; --border: #e2e8f0; }
+        :root { --primary: #db2777; --primary-hover: #be185d; --bg: #fff1f2; --card: #ffffff; --text: #2d0b1e; --border: #fbcfe8; }
         body { margin: 0; font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); }
         .main-content { margin-left: 260px; padding: 40px; }
         .container { max-width: 620px; margin: 0 auto; }
@@ -50,8 +50,8 @@
     <div class="main-content">
         <div class="container">
             <div class="page-header">
-                <h1>&#10133; List a New Item</h1>
-                <p>Share your item with the community and earn from it.</p>
+                <h1>✨ Add a New Product</h1>
+                <p>Add a new designer product to your boutique collection.</p>
             </div>
 
             <% if (error != null && !error.isEmpty()) { %>
@@ -62,38 +62,50 @@
                 <form action="<%= request.getContextPath() %>/AddItemServlet" method="post" enctype="multipart/form-data" id="addForm">
 
                     <div class="form-group">
-                        <label for="itemName">Item Name *</label>
-                        <input type="text" id="itemName" name="name" placeholder="e.g. Professional Drill Machine" required>
+                        <label for="itemName">Product Name *</label>
+                        <input type="text" id="itemName" name="name" placeholder="e.g. Designer Banarasi Silk Saree" required>
                     </div>
 
                     <div class="form-group">
                         <label for="itemCategory">Category *</label>
                         <select id="itemCategory" name="category" required>
                             <option value="" disabled selected>Select a category</option>
-                            <option value="Electronics">&#128421; Electronics</option>
-                            <option value="Toys">&#129513; Toys</option>
-                            <option value="Stationery">&#128221; Stationery</option>
-                            <option value="Tools">&#128295; Tools</option>
-                            <option value="Appliances">&#127768; Appliances</option>
-                            <option value="Sports">&#9917; Sports</option>
-                            <option value="Others">&#128230; Others</option>
+                            <option value="Saree">🌸 Saree</option>
+                            <option value="Kurti">👗 Kurti</option>
+                            <option value="Lehenga">✨ Lehenga</option>
+                            <option value="Western Wear">👚 Western Wear</option>
+                            <option value="Dress Materials">🧵 Dress Materials</option>
+                            <option value="Others">📦 Others</option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label for="itemDesc">Description *</label>
-                        <textarea id="itemDesc" name="description" placeholder="Describe the condition, usage rules, and any details borrowers should know..." required></textarea>
+                        <label for="itemDesc">Description (Optional)</label>
+                        <textarea id="itemDesc" name="description" placeholder="Optional details, fabric info, usage notes..."></textarea>
                     </div>
 
                     <div class="form-group">
-                        <label for="itemPrice">Rental Price (&#8377; per hour) *</label>
-                        <input type="number" id="itemPrice" name="price" placeholder="e.g. 150" min="1" step="1" required>
+                        <label for="itemPrice">Product Price (&#8377;) *</label>
+                        <input type="number" id="itemPrice" name="price" placeholder="e.g. 2500" min="1" step="1" required>
                     </div>
 
                     <div class="form-group">
-                        <label>Item Photo</label>
+                        <label for="offerTag">Offer / Discount Badge (Optional)</label>
+                        <input type="text" id="offerTag" name="offer_tag" placeholder="e.g. 20% OFF, Festival Special, Buy 1 Get 1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stockStatus">Availability / Stock Status (Optional)</label>
+                        <select id="stockStatus" name="stock_status" style="width:100%; padding:12px; border-radius:10px; border:1px solid #cbd5e1; font-family:inherit; font-size:14px;">
+                            <option value="In Stock" selected>🟢 In Stock (Available for Buyers)</option>
+                            <option value="Out of Stock">🔴 Out of Stock (Temporarily Unavailable)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Product Photo</label>
                         <div class="file-input-wrapper">
-                            <p>&#128247; Click to upload an image of your item</p>
+                            <p>📸 Click to upload an image of your product</p>
                             <input type="file" name="image" accept="image/*" id="imageInput" onchange="previewImage(this)">
                             <span id="fileLabel"></span>
                         </div>
@@ -102,7 +114,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn-submit" id="submitBtn">&#128275; List Item for Rent</button>
+                    <button type="submit" class="btn-submit" id="submitBtn">✨ Add Product to Boutique</button>
                 </form>
 
                 <a href="myItems.jsp" class="back-link">&#8592; Back to My Items</a>
