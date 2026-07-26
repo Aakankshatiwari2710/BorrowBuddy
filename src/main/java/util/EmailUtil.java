@@ -11,13 +11,12 @@ public class EmailUtil {
 
     // Default Email Configurations for SpanV Studios
     private static final String SMTP_HOST = "smtp.gmail.com";
-    private static final String SMTP_PORT = "587";
     private static final String SENDER_EMAIL = "spandanav2606@gmail.com";
     private static final String SENDER_PASSWORD = "asucwkpwwkxcjhoe";
     private static final String SENDER_NAME = "SpanV Studios";
 
     // Async thread pool so web requests never lag
-    private static final ExecutorService executor = Executors.newFixedThreadPool(3);
+    private static final ExecutorService executor = Executors.newFixedThreadPool(5);
 
     /**
      * Send HTML email in background thread
@@ -36,15 +35,36 @@ public class EmailUtil {
     }
 
     /**
-     * Send email synchronously
+     * Send email synchronously with Port 465 / 587 cloud fallback
      */
     public static void sendEmailSync(String toEmail, String subject, String htmlContent) throws Exception {
+        try {
+            sendEmailInternal(toEmail, subject, htmlContent, "465", true);
+        } catch (Exception e1) {
+            System.err.println("⚠️ Port 465 email failed, retrying on Port 587... Error: " + e1.getMessage());
+            sendEmailInternal(toEmail, subject, htmlContent, "587", false);
+        }
+    }
+
+    private static void sendEmailInternal(String toEmail, String subject, String htmlContent, String port, boolean isSsl) throws Exception {
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.starttls.enable", "true");
         props.put("mail.smtp.host", SMTP_HOST);
-        props.put("mail.smtp.port", SMTP_PORT);
-        props.put("mail.smtp.ssl.protocols", "TLSv1.2");
+        props.put("mail.smtp.port", port);
+        props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
+        props.put("mail.smtp.connectiontimeout", "10000");
+        props.put("mail.smtp.timeout", "10000");
+
+        if (isSsl) {
+            props.put("mail.smtp.socketFactory.port", port);
+            props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+            props.put("mail.smtp.socketFactory.fallback", "false");
+            props.put("mail.smtp.ssl.enable", "true");
+        } else {
+            props.put("mail.smtp.starttls.enable", "true");
+            props.put("mail.smtp.starttls.required", "true");
+            props.put("mail.smtp.ssl.protocols", "TLSv1.2");
+        }
 
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
@@ -60,73 +80,109 @@ public class EmailUtil {
         message.setContent(htmlContent, "text/html; charset=utf-8");
 
         Transport.send(message);
-        System.out.println("✅ [JavaMail] Email successfully sent to: " + toEmail);
+        System.out.println("✅ [JavaMail] Email successfully sent to: " + toEmail + " via Port " + port);
     }
 
-    // Helper HTML Templates for SpanV Studios
-    public static String buildWelcomeTemplate(String userName) {
-        return "<div style='font-family: Arial, sans-serif; padding: 20px; background-color: #fff1f2; border-radius: 12px;'>"
-             + "  <h2 style='color: #be185d;'>Welcome to SpanV Studios, " + userName + "! ✨</h2>"
-             + "  <p style='color: #334155; font-size: 15px;'>Thank you for joining our premium ethnic fashion boutique. Discover handcrafted sarees, kurtis, lehengas, and designer fabrics.</p>"
-             + "  <p style='color: #64748b; font-size: 13px;'>If you have any questions, feel free to reach out to us at spandanav2606@gmail.com or +91 7899978229.</p>"
-             + "  <hr style='border: none; border-top: 1px solid #fbcfe8; margin: 20px 0;'/>"
-             + "  <small style='color: #94a3b8;'>SpanV Studios • Celebrating Your Elegance</small>"
-             + "</div>";
+    public static String buildOtpTemplate(String name, String otp) {
+        return "<html>" +
+               "<head><style>" +
+               "body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #faf5f7; margin: 0; padding: 20px; }" +
+               ".container { max-width: 550px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid #f0e6eb; }" +
+               ".header { background: linear-gradient(135deg, #d81b60 0%, #8e24aa 100%); padding: 30px; text-align: center; color: #ffffff; }" +
+               ".header h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: 1px; }" +
+               ".content { padding: 35px 30px; color: #333333; line-height: 1.6; }" +
+               ".otp-box { background: #fff0f5; border: 2px dashed #d81b60; border-radius: 12px; padding: 20px; text-align: center; margin: 25px 0; }" +
+               ".otp-code { font-size: 36px; font-weight: 800; color: #d81b60; letter-spacing: 8px; font-family: monospace; }" +
+               ".footer { background: #f9f9f9; padding: 20px; text-align: center; font-size: 13px; color: #777777; border-top: 1px solid #eeeeee; }" +
+               "</style></head>" +
+               "<body>" +
+               "<div class='container'>" +
+               "<div class='header'><h1>SpanV Studios</h1></div>" +
+               "<div class='content'>" +
+               "<h2>Verify Email Address</h2>" +
+               "<p>Hello <b>" + name + "</b>,</p>" +
+               "<p>Thank you for choosing <b>SpanV Studios</b>. Your 6-digit OTP verification code is:</p>" +
+               "<div class='otp-box'><div class='otp-code'>" + otp + "</div></div>" +
+               "<p>This code will expire in <b>10 minutes</b>. Please do not share this OTP code with anyone.</p>" +
+               "</div>" +
+               "<div class='footer'>SpanV Studios &bull; Premium Ethnic & Boutique Collection<br>Support: +91 7899978229 | spandanav2606@gmail.com</div>" +
+               "</div></body></html>";
     }
 
-    public static String buildOrderReceiptTemplate(String itemName, double amount, String utrRef, String deliveryAddress) {
-        return "<div style='font-family: Arial, sans-serif; padding: 20px; background-color: #fff1f2; border-radius: 12px;'>"
-             + "  <h2 style='color: #be185d;'>Order Receipt & Delivery Summary 🛍️</h2>"
-             + "  <p style='color: #334155;'>Thank you for your purchase! We have received your payment details.</p>"
-             + "  <table style='width: 100%; border-collapse: collapse; margin: 15px 0; background: white; border-radius: 8px; overflow: hidden;'>"
-             + "    <tr style='background: #fdf2f8;'><td style='padding: 10px; font-weight: bold;'>Product:</td><td style='padding: 10px;'>" + itemName + "</td></tr>"
-             + "    <tr><td style='padding: 10px; font-weight: bold;'>Amount Paid:</td><td style='padding: 10px;'>₹" + (int)amount + "</td></tr>"
-             + "    <tr style='background: #fdf2f8;'><td style='padding: 10px; font-weight: bold;'>UTR Ref Number:</td><td style='padding: 10px;'>" + utrRef + "</td></tr>"
-             + "    <tr><td style='padding: 10px; font-weight: bold;'>Delivery Address:</td><td style='padding: 10px;'>" + deliveryAddress + "</td></tr>"
-             + "  </table>"
-             + "  <p style='color: #059669; font-weight: bold;'>Status: Pending Owner Verification</p>"
-             + "  <hr style='border: none; border-top: 1px solid #fbcfe8; margin: 20px 0;'/>"
-             + "  <small style='color: #94a3b8;'>SpanV Studios • Instagram @spanv_studios</small>"
-             + "</div>";
+    public static String buildWelcomeTemplate(String name) {
+        return "<html><head><style>" +
+               "body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #faf5f7; margin: 0; padding: 20px; }" +
+               ".container { max-width: 550px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid #f0e6eb; }" +
+               ".header { background: linear-gradient(135deg, #d81b60 0%, #8e24aa 100%); padding: 30px; text-align: center; color: #ffffff; }" +
+               ".content { padding: 35px 30px; color: #333333; line-height: 1.6; }" +
+               ".btn { display: inline-block; padding: 14px 28px; background: #d81b60; color: #ffffff !important; text-decoration: none; border-radius: 30px; font-weight: bold; margin-top: 20px; }" +
+               ".footer { background: #f9f9f9; padding: 20px; text-align: center; font-size: 13px; color: #777777; border-top: 1px solid #eeeeee; }" +
+               "</style></head><body>" +
+               "<div class='container'>" +
+               "<div class='header'><h1>Welcome to SpanV Studios ✨</h1></div>" +
+               "<div class='content'>" +
+               "<h2>Account Verified Successfully!</h2>" +
+               "<p>Hi <b>" + name + "</b>,</p>" +
+               "<p>Your email has been verified! Welcome to SpanV Studios - your premier destination for luxury ethnic wear and designer boutique collections.</p>" +
+               "<p>You can now browse exclusive designer sarees, kurtis, and lehengas or place booking requests directly from your dashboard.</p>" +
+               "<center><a href='http://localhost:8080/login.jsp' class='btn'>Explore Collection Now &rarr;</a></center>" +
+               "</div>" +
+               "<div class='footer'>SpanV Studios &bull; Premium Ethnic Collection</div>" +
+               "</div></body></html>";
+    }
+
+    public static String buildResetOtpTemplate(String name, String otp) {
+        return "<html><head><style>" +
+               "body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #faf5f7; margin: 0; padding: 20px; }" +
+               ".container { max-width: 550px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid #f0e6eb; }" +
+               ".header { background: linear-gradient(135deg, #d81b60 0%, #8e24aa 100%); padding: 30px; text-align: center; color: #ffffff; }" +
+               ".content { padding: 35px 30px; color: #333333; line-height: 1.6; }" +
+               ".otp-box { background: #fff0f5; border: 2px dashed #d81b60; border-radius: 12px; padding: 20px; text-align: center; margin: 25px 0; }" +
+               ".otp-code { font-size: 36px; font-weight: 800; color: #d81b60; letter-spacing: 8px; font-family: monospace; }" +
+               ".footer { background: #f9f9f9; padding: 20px; text-align: center; font-size: 13px; color: #777777; border-top: 1px solid #eeeeee; }" +
+               "</style></head><body>" +
+               "<div class='container'>" +
+               "<div class='header'><h1>SpanV Studios</h1></div>" +
+               "<div class='content'>" +
+               "<h2>Password Reset Request</h2>" +
+               "<p>Hello <b>" + name + "</b>,</p>" +
+               "<p>We received a request to reset your SpanV Studios account password. Your password reset OTP code is:</p>" +
+               "<div class='otp-box'><div class='otp-code'>" + otp + "</div></div>" +
+               "<p>If you did not request a password reset, please ignore this email.</p>" +
+               "</div>" +
+               "<div class='footer'>SpanV Studios &bull; Security Team</div>" +
+               "</div></body></html>";
     }
 
     public static String buildOrderConfirmedTemplate(int bookingId, String custName, String itemName, double price, String address, String city, String pincode, String phone, String utrNote) {
-        String fullAddr = (address != null && !address.trim().isEmpty()) 
-                          ? (address + (city != null && !city.isEmpty() ? ", " + city : "") + (pincode != null && !pincode.isEmpty() ? " - " + pincode : "")) 
-                          : "Standard Delivery Address";
-        if (phone != null && !phone.trim().isEmpty()) {
-            fullAddr += " | Phone: " + phone;
-        }
-
-        return "<div style='font-family: Arial, sans-serif; padding: 25px; background-color: #f0fdf4; border-radius: 16px; border: 1px solid #bbf7d0; max-width: 550px; margin: 0 auto;'>"
-             + "  <h2 style='color: #166534; margin-top: 0;'>Order & Payment Confirmed! 🎉</h2>"
-             + "  <p style='color: #15803d; font-weight: bold; font-size: 15px;'>Hello " + (custName != null ? custName : "Valued Customer") + ", SpanV Studios has approved your order!</p>"
-             + "  <div style='background: white; border-radius: 12px; padding: 18px; border: 1px solid #dcfce7; margin: 20px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.04);'>"
-             + "    <table style='width: 100%; border-collapse: collapse; font-size: 14px; color: #1e293b;'>"
-             + "      <tr style='border-bottom: 1px dashed #e2e8f0;'><td style='padding: 10px 0; color: #64748b;'>Order ID:</td><td style='padding: 10px 0; font-weight: bold; text-align: right;'>#" + bookingId + "</td></tr>"
-             + "      <tr style='border-bottom: 1px dashed #e2e8f0;'><td style='padding: 10px 0; color: #64748b;'>Product Name:</td><td style='padding: 10px 0; font-weight: bold; text-align: right; color: #be185d;'>" + itemName + "</td></tr>"
-             + "      <tr style='border-bottom: 1px dashed #e2e8f0;'><td style='padding: 10px 0; color: #64748b;'>Amount Paid:</td><td style='padding: 10px 0; font-weight: bold; text-align: right; color: #059669;'>₹" + (int)price + "</td></tr>"
-             + "      <tr style='border-bottom: 1px dashed #e2e8f0;'><td style='padding: 10px 0; color: #64748b;'>Payment Status:</td><td style='padding: 10px 0; font-weight: bold; text-align: right; color: #166534;'>✅ VERIFIED & PAID</td></tr>"
-             + "      <tr><td style='padding: 10px 0; color: #64748b;'>Delivery Address:</td><td style='padding: 10px 0; font-weight: 500; text-align: right;'>" + fullAddr + "</td></tr>"
-             + "    </table>"
-             + "  </div>"
-             + "  <p style='color: #334155; font-size: 14px;'>Your designer piece is now being prepared for dispatch. Thank you for shopping with SpanV Studios!</p>"
-             + "  <hr style='border: none; border-top: 1px solid #bbf7d0; margin: 20px 0;'/>"
-             + "  <small style='color: #15803d;'>SpanV Studios • Instagram @spanv_studios • Support: +91 7899978229</small>"
-             + "</div>";
-    }
-
-    public static String buildOtpEmailTemplate(String userName, String otpCode) {
-        return "<div style='font-family: Arial, sans-serif; padding: 25px; background-color: #fff1f2; border-radius: 16px; max-width: 500px; margin: 0 auto; border: 1px solid #fbcfe8;'>"
-             + "  <h2 style='color: #be185d; margin-top: 0;'>🔐 Verify Your Email Address</h2>"
-             + "  <p style='color: #334155; font-size: 15px;'>Hello <strong>" + userName + "</strong>,</p>"
-             + "  <p style='color: #334155; font-size: 15px;'>Thank you for registering with <strong>SpanV Studios</strong>. Please use the 6-digit OTP verification code below to complete your registration:</p>"
-             + "  <div style='text-align: center; margin: 25px 0;'>"
-             + "    <span style='font-size: 32px; font-weight: 800; color: #be185d; letter-spacing: 8px; background: white; padding: 12px 28px; border-radius: 12px; border: 2px dashed #db2777; display: inline-block;'>" + otpCode + "</span>"
-             + "  </div>"
-             + "  <p style='color: #64748b; font-size: 13px;'>This OTP code is valid for account activation. If you did not request this code, please ignore this email.</p>"
-             + "  <hr style='border: none; border-top: 1px solid #fbcfe8; margin: 20px 0;'/>"
-             + "  <small style='color: #94a3b8;'>SpanV Studios • Instagram @spanv_studios</small>"
-             + "</div>";
+        return "<html><head><style>" +
+               "body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #faf5f7; margin: 0; padding: 20px; }" +
+               ".container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid #f0e6eb; }" +
+               ".header { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 30px; text-align: center; color: #ffffff; }" +
+               ".content { padding: 35px 30px; color: #333333; line-height: 1.6; }" +
+               ".receipt-card { background: #f8faf9; border: 1px solid #e1efe6; border-radius: 12px; padding: 20px; margin: 20px 0; }" +
+               ".row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #e0e0e0; font-size: 14px; }" +
+               ".total { font-size: 18px; font-weight: bold; color: #11998e; border-bottom: none; padding-top: 12px; }" +
+               ".badge { background: #e8f5e9; color: #2e7d32; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 13px; display: inline-block; }" +
+               ".footer { background: #f9f9f9; padding: 20px; text-align: center; font-size: 13px; color: #777777; border-top: 1px solid #eeeeee; }" +
+               "</style></head><body>" +
+               "<div class='container'>" +
+               "<div class='header'><h1>Booking Approved! 🎉</h1></div>" +
+               "<div class='content'>" +
+               "<h2>Order Confirmation Receipt</h2>" +
+               "<p>Dear <b>" + custName + "</b>,</p>" +
+               "<p>Great news! The boutique owner has <b>APPROVED</b> your order request. Here are your verified booking and payment details:</p>" +
+               "<div class='receipt-card'>" +
+               "<div class='row'><span>Booking ID:</span> <b>#" + bookingId + "</b></div>" +
+               "<div class='row'><span>Product Name:</span> <b>" + itemName + "</b></div>" +
+               "<div class='row'><span>Delivery Address:</span> <b>" + (address != null ? address : "") + ", " + (city != null ? city : "") + " - " + (pincode != null ? pincode : "") + "</b></div>" +
+               "<div class='row'><span>Contact Phone:</span> <b>" + (phone != null ? phone : "") + "</b></div>" +
+               "<div class='row'><span>Payment Status:</span> <span class='badge'>VERIFIED & PAID</span></div>" +
+               "<div class='row total'><span>Total Amount Paid:</span> <span>₹" + String.format("%.2f", price) + "</span></div>" +
+               "</div>" +
+               "<p>Your order is now being processed for dispatch. For any support, contact <b>SpanV Studios</b> at <b>+91 7899978229</b>.</p>" +
+               "</div>" +
+               "<div class='footer'>SpanV Studios &bull; Premium Ethnic Collection<br>Instagram: @spanv_studios</div>" +
+               "</div></body></html>";
     }
 }
