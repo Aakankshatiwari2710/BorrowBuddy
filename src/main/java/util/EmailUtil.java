@@ -84,6 +84,10 @@ public class EmailUtil {
     }
 
     public static String buildOtpTemplate(String name, String otp) {
+        return buildOtpEmailTemplate(name, otp);
+    }
+
+    public static String buildOtpEmailTemplate(String name, String otp) {
         return "<html>" +
                "<head><style>" +
                "body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #faf5f7; margin: 0; padding: 20px; }" +
@@ -125,7 +129,7 @@ public class EmailUtil {
                "<p>Hi <b>" + name + "</b>,</p>" +
                "<p>Your email has been verified! Welcome to SpanV Studios - your premier destination for luxury ethnic wear and designer boutique collections.</p>" +
                "<p>You can now browse exclusive designer sarees, kurtis, and lehengas or place booking requests directly from your dashboard.</p>" +
-               "<center><a href='http://localhost:8080/login.jsp' class='btn'>Explore Collection Now &rarr;</a></center>" +
+               "<center><a href='https://spanv-studios.onrender.com/login.jsp' class='btn'>Explore Collection Now &rarr;</a></center>" +
                "</div>" +
                "<div class='footer'>SpanV Studios &bull; Premium Ethnic Collection</div>" +
                "</div></body></html>";
@@ -152,6 +156,10 @@ public class EmailUtil {
                "</div>" +
                "<div class='footer'>SpanV Studios &bull; Security Team</div>" +
                "</div></body></html>";
+    }
+
+    public static String buildOrderReceiptTemplate(String itemName, double price, String utrNote, String address) {
+        return buildOrderConfirmedTemplate(101, "Customer", itemName, price, address, "", "", "", utrNote);
     }
 
     public static String buildOrderConfirmedTemplate(int bookingId, String custName, String itemName, double price, String address, String city, String pincode, String phone, String utrNote) {
