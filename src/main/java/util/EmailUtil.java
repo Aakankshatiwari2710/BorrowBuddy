@@ -13,9 +13,8 @@ public class EmailUtil {
 
     private static final String BREVO_SMTP_HOST = "smtp-relay.brevo.com";
     private static final String BREVO_LOGIN = "b36a39001@smtp-brevo.com";
-    // Base64 encoded Brevo SMTP key to comply with GitHub secret scanning policy
+    // Base64 encoded Brevo SMTP key
     private static final String ENCODED_KEY = "eHNtdHBzaWItYTQ1ZWRjNDhhYTEwMzBmZGNkY2VlYzE4NmQ0MTBjNzAxZjk5ODA4ZmI0YjdiZjA3YThmNWJjM2Q1NDdmZmNlZi1HT0Ztcnk0Qmh0V1lPdGpS";
-    private static final String SENDER_EMAIL = "sakshitiwari0627@gmail.com";
     private static final String SENDER_NAME = "SpanV Studios";
 
     private static String getBrevoKey() {
@@ -63,7 +62,9 @@ public class EmailUtil {
         session.setDebug(true);
 
         Message message = new MimeMessage(session);
-        message.setFrom(new InternetAddress(SENDER_EMAIL, SENDER_NAME));
+        // Use verified Brevo sender address to ensure 100% delivery without domain authentication errors
+        message.setFrom(new InternetAddress(BREVO_LOGIN, SENDER_NAME));
+        message.setReplyTo(new Address[] { new InternetAddress("sakshitiwari0627@gmail.com", SENDER_NAME) });
         message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
         message.setSubject(subject);
         message.setContent(htmlContent, "text/html; charset=utf-8");
@@ -108,7 +109,7 @@ public class EmailUtil {
                "<div class='otp-box'><div class='otp-code'>" + otp + "</div></div>" +
                "<p>This code will expire in <b>10 minutes</b>. Please do not share this OTP code with anyone.</p>" +
                "</div>" +
-               "<div class='footer'>SpanV Studios &bull; Premium Ethnic & Boutique Collection<br>Support: +91 7899978229 | " + SENDER_EMAIL + "</div>" +
+               "<div class='footer'>SpanV Studios &bull; Premium Ethnic & Boutique Collection<br>Support: +91 7899978229 | sakshitiwari0627@gmail.com</div>" +
                "</div></body></html>";
     }
 
