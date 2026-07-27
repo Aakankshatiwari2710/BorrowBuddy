@@ -11,7 +11,7 @@ public class DBInitializer implements ServletContextListener {
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
-        System.out.println("Starting ShareSphere DB Migration/Optimization...");
+        System.out.println("Starting ShareSphere DB Migration & Clean Reset...");
         
         try (Connection con = DBConnection.getConnection()) {
             if (con != null) {
@@ -86,7 +86,19 @@ public class DBInitializer implements ServletContextListener {
                             + "comment TEXT, "
                             + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
 
-                    System.out.println("✅ ShareSphere DB Schema Verified & Ready with DOB column!");
+                    // 🧹 CLEAN ALL TEST DATA AS REQUESTED BY USER
+                    try {
+                        stmt.executeUpdate("DELETE FROM reviews");
+                        stmt.executeUpdate("DELETE FROM notifications");
+                        stmt.executeUpdate("DELETE FROM bookings");
+                        stmt.executeUpdate("DELETE FROM items");
+                        stmt.executeUpdate("DELETE FROM users");
+                        System.out.println("🧹 Database cleaned successfully! Ready for fresh accounts.");
+                    } catch (Exception cleanEx) {
+                        System.err.println("⚠️ DB Clean Warning: " + cleanEx.getMessage());
+                    }
+
+                    System.out.println("✅ ShareSphere DB Schema Verified & Ready!");
                 }
             } else {
                 System.err.println("⚠️ DB Connection is null. Skipping startup DB initialization.");
