@@ -9,7 +9,7 @@ import javax.mail.internet.MimeMessage;
 
 public class EmailUtil {
 
-    // Verified Live Working Credentials for SpanV Studios
+    // Verified Live Credentials for SpanV Studios
     private static final String SMTP_HOST = "smtp.gmail.com";
     private static final String SENDER_EMAIL = "sakshitiwari0627@gmail.com";
     private static final String SENDER_PASSWORD = "zzynwhligrsbanaz";
@@ -35,19 +35,36 @@ public class EmailUtil {
     }
 
     /**
-     * Send email synchronously with STARTTLS and debug logging
+     * Send email synchronously with SSL 465 & STARTTLS 587 fallback
      */
     public static void sendEmailSync(String toEmail, String subject, String htmlContent) throws Exception {
+        try {
+            sendEmailInternal(toEmail, subject, htmlContent, "465", true);
+        } catch (Exception e1) {
+            System.err.println("⚠️ Port 465 SSL failed (" + e1.getMessage() + "), retrying Port 587 STARTTLS...");
+            sendEmailInternal(toEmail, subject, htmlContent, "587", false);
+        }
+    }
+
+    private static void sendEmailInternal(String toEmail, String subject, String htmlContent, String port, boolean isSsl) throws Exception {
         Properties props = new Properties();
         props.put("mail.smtp.host", SMTP_HOST);
-        props.put("mail.smtp.port", "587");
+        props.put("mail.smtp.port", port);
         props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.smtp.starttls.required", "true");
         props.put("mail.smtp.ssl.trust", "*");
-        props.put("mail.smtp.ssl.protocols", "TLSv1.2 TLSv1.3");
-        props.put("mail.smtp.connectiontimeout", "15000");
-        props.put("mail.smtp.timeout", "15000");
+        props.put("mail.smtp.connectiontimeout", "10000");
+        props.put("mail.smtp.timeout", "10000");
+
+        if (isSsl) {
+            props.put("mail.smtp.ssl.enable", "true");
+            props.put("mail.smtp.socketFactory.port", port);
+            props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+            props.put("mail.smtp.socketFactory.fallback", "false");
+        } else {
+            props.put("mail.smtp.starttls.enable", "true");
+            props.put("mail.smtp.starttls.required", "true");
+            props.put("mail.smtp.ssl.protocols", "TLSv1.2 TLSv1.3");
+        }
 
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
@@ -65,7 +82,7 @@ public class EmailUtil {
         message.setContent(htmlContent, "text/html; charset=utf-8");
 
         Transport.send(message);
-        System.out.println("✅ [JavaMail Success] Email successfully sent to: " + toEmail + " via " + SENDER_EMAIL);
+        System.out.println("✅ [JavaMail Success] Email successfully sent to: " + toEmail + " via Port " + port);
     }
 
     public static void main(String[] args) {
