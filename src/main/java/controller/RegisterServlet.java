@@ -1,6 +1,8 @@
 package controller;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -30,25 +32,29 @@ public class RegisterServlet extends HttpServlet {
         if (password != null) password = password.trim();
         if (dob != null) dob = dob.trim();
         if (location != null) location = location.trim();
+        if (role != null) role = role.trim();
 
-        if (name == null || email == null || password == null || role == null ||
-            name.isEmpty() || email.isEmpty() || password.isEmpty() || role.isEmpty()) {
-            response.sendRedirect("register.jsp?error=empty");
+        if (name == null || name.isEmpty() ||
+            email == null || email.isEmpty() ||
+            password == null || password.isEmpty()) {
+            response.sendRedirect("register.jsp?error=" + URLEncoder.encode("Please fill in all required fields.", StandardCharsets.UTF_8));
             return;
         }
 
+        if (dob == null || dob.isEmpty()) dob = "2000-01-01";
+        if (location == null || location.isEmpty()) location = "India";
+        if (role == null || role.isEmpty()) role = "Customer";
+
         try (Connection con = DBConnection.getConnection()) {
             if (con == null) {
-                response.sendRedirect("register.jsp?error=db_connection_failed");
+                response.sendRedirect("register.jsp?error=" + URLEncoder.encode("Database connection failed. Please try again.", StandardCharsets.UTF_8));
                 return;
             }
 
-            // Ensure 'dob' column exists in MySQL table on live server
+            // Ensure schema compatibility on live DB
             try (Statement stmt = con.createStatement()) {
                 stmt.executeUpdate("ALTER TABLE users ADD COLUMN dob VARCHAR(20) NULL");
-            } catch (Exception ignored) {
-                // Column already exists or handled by MySQL
-            }
+            } catch (Exception ignored) {}
 
             // 1. Check duplicate email
             PreparedStatement psCheck = con.prepareStatement("SELECT id FROM users WHERE LOWER(email)=?");
@@ -64,13 +70,13 @@ public class RegisterServlet extends HttpServlet {
             rsCheck.close();
             psCheck.close();
 
-            // 2. Hash password & insert user directly with DOB into database
+            // 2. Hash password & insert user
             String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
             int newUserId = 0;
 
             try {
                 PreparedStatement psInsert = con.prepareStatement(
-                    "INSERT INTO users (name, email, password, dob, location, role, is_verified, email_verified, trust_score, profile_image) VALUES (?, ?, ?, ?, ?, ?, TRUE, TRUE, 10, 'default_profile.png')",
+                    "INSERT INTO users (name, email, password, dob, location, role, is_verified, email_verified, trust_score, profile_image) VALUES (?, ?, ?, ?, ?, ?, 1, 1, 10, 'default_profile.png')",
                     Statement.RETURN_GENERATED_KEYS
                 );
                 psInsert.setString(1, name);
@@ -90,10 +96,9 @@ public class RegisterServlet extends HttpServlet {
                 }
                 psInsert.close();
             } catch (Exception sqlEx) {
-                // Fallback insert without dob column if DB schema mismatch occurs
-                System.err.println("⚠️ Inserting with dob failed, falling back: " + sqlEx.getMessage());
+                System.err.println("⚠️ Insert with DOB failed, using fallback query: " + sqlEx.getMessage());
                 PreparedStatement psFallback = con.prepareStatement(
-                    "INSERT INTO users (name, email, password, location, role, is_verified, email_verified, trust_score, profile_image) VALUES (?, ?, ?, ?, ?, TRUE, TRUE, 10, 'default_profile.png')",
+                    "INSERT INTO users (name, email, password, location, role) VALUES (?, ?, ?, ?, ?)",
                     Statement.RETURN_GENERATED_KEYS
                 );
                 psFallback.setString(1, name);
@@ -113,7 +118,7 @@ public class RegisterServlet extends HttpServlet {
                 psFallback.close();
             }
 
-            // 3. Create active User Session & Auto-login
+            // 3. Auto-login Session
             HttpSession session = request.getSession(true);
             session.setAttribute("userId", newUserId);
             session.setAttribute("userName", name);
@@ -121,12 +126,13 @@ public class RegisterServlet extends HttpServlet {
             session.setAttribute("userRole", role);
             session.setAttribute("userLocation", location);
 
-            // 4. Redirect directly to Dashboard
+            // 4. Redirect to Dashboard
             response.sendRedirect("dashboard.jsp?msg=welcome");
 
         } catch (Throwable t) {
             t.printStackTrace(); 
-            response.sendRedirect("register.jsp?error=server_error");
+            String errMsg = t.getMessage() != null ? t.getMessage() : "Unknown Server Error";
+            response.sendRedirect("register.jsp?error=" + URLEncoder.encode(errMsg, StandardCharsets.UTF_8));
         }
     }
 }

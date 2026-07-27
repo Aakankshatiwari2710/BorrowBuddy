@@ -132,18 +132,16 @@
             <p>Join our premium boutique shopping community.</p>
 
             <% String err = request.getParameter("error"); 
-               if(err != null) { 
-                   String msg = "Registration failed. Please try again."; 
+               if(err != null && !err.isEmpty()) { 
+                   String msg = err; 
                    if("duplicate_email".equals(err)) {
                        msg = "This email is already registered."; 
                    } else if("db_connection_failed".equals(err)) {
                        msg = "Database connection failed. Please ensure MySQL is running.";
-                   } else if("server_error".equals(err)) {
-                       msg = "Server error occurred. Please try again.";
                    }
             %>
-                <div style="background: #fee2e2; color: #ef4444; padding: 10px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; font-weight: 500;">
-                    <%= msg %>
+                <div style="background: #fee2e2; color: #ef4444; padding: 12px; border-radius: 10px; margin-bottom: 20px; font-size: 13px; font-weight: 500; border: 1px solid #fecaca; text-align: left;">
+                    ⚠️ <%= msg %>
                 </div>
             <% } %>
 
