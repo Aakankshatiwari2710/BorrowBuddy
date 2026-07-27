@@ -8,7 +8,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forgot Password | SpanV Studios</title>
+    <title>Reset Password via DOB | SpanV Studios</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -38,13 +38,13 @@
             border-radius: 28px;
             box-shadow: 0 15px 40px rgba(219, 39, 119, 0.12);
             width: 100%;
-            max-width: 440px;
+            max-width: 460px;
             text-align: center;
             border: 1px solid #fbcfe8;
         }
 
         .logo-wrap {
-            font-size: 32px;
+            font-size: 36px;
             margin-bottom: 10px;
         }
 
@@ -64,7 +64,7 @@
 
         .form-group {
             text-align: left;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         label {
@@ -77,7 +77,7 @@
 
         input {
             width: 100%;
-            padding: 13px 16px;
+            padding: 12px 16px;
             border-radius: 12px;
             border: 2px solid #e2e8f0;
             font-family: inherit;
@@ -120,8 +120,8 @@
             text-align: left;
         }
 
-        .alert-error { background: #fee2e2; color: #991b1b; }
-        .alert-msg   { background: #dcfce7; color: #166534; }
+        .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .alert-msg   { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
 
         .back-link {
             display: inline-block;
@@ -138,9 +138,9 @@
 <body>
 
     <div class="card">
-        <div class="logo-wrap">🔑</div>
-        <h2>Forgot Password?</h2>
-        <p>Enter your registered email address to receive a 6-digit password reset OTP code.</p>
+        <div class="logo-wrap">🔐</div>
+        <h2>Reset Password</h2>
+        <p>Verify your Email &amp; Date of Birth (DOB) to create a new password instantly.</p>
 
         <% if (error != null && !error.isEmpty()) { %>
             <div class="alert alert-error">⚠️ <%= error %></div>
@@ -150,17 +150,47 @@
             <div class="alert alert-msg">✅ <%= msg %></div>
         <% } %>
 
-        <form action="ForgotPasswordServlet" method="post">
+        <form action="<%=request.getContextPath()%>/ForgotPasswordServlet" method="post" id="resetForm" onsubmit="return validateForm()">
             <div class="form-group">
-                <label>Email Address</label>
-                <input type="email" name="email" placeholder="spandanav2606@gmail.com" required>
+                <label>Registered Email Address</label>
+                <input type="email" name="email" placeholder="e.g. sakshitiwari0627@gmail.com" required>
             </div>
 
-            <button type="submit" class="btn-submit">📩 Send Password Reset OTP</button>
+            <div class="form-group">
+                <label>Date of Birth (DOB)</label>
+                <input type="date" name="dob" required>
+            </div>
+
+            <div class="form-group">
+                <label>New Password</label>
+                <input type="password" name="newPassword" id="newPassword" placeholder="At least 6 characters" required>
+            </div>
+
+            <div class="form-group">
+                <label>Confirm New Password</label>
+                <input type="password" name="confirmPassword" id="confirmPassword" placeholder="Repeat new password" required>
+            </div>
+
+            <button type="submit" class="btn-submit">✨ Update Password &amp; Login</button>
         </form>
 
         <a href="login.jsp" class="back-link">← Back to Login</a>
     </div>
 
+    <script>
+        function validateForm() {
+            var pass = document.getElementById("newPassword").value;
+            var confirm = document.getElementById("confirmPassword").value;
+            if (pass !== confirm) {
+                alert("Passwords do not match! Please check and try again.");
+                return false;
+            }
+            if (pass.length < 6) {
+                alert("Password must be at least 6 characters long.");
+                return false;
+            }
+            return true;
+        }
+    </script>
 </body>
 </html>

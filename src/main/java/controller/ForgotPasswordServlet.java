@@ -8,8 +8,8 @@ import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
 
+import org.mindrot.jbcrypt.BCrypt;
 import util.DBConnection;
-import util.EmailUtil;
 
 @WebServlet("/ForgotPasswordServlet")
 public class ForgotPasswordServlet extends HttpServlet {
@@ -18,10 +18,20 @@ public class ForgotPasswordServlet extends HttpServlet {
             throws ServletException, IOException {
 
         String email = request.getParameter("email");
-        if (email != null) email = email.trim();
+        String dob = request.getParameter("dob");
+        String newPassword = request.getParameter("newPassword");
 
-        if (email == null || email.isEmpty()) {
-            response.sendRedirect("forgotPassword.jsp?error=Please+enter+your+email+address.");
+        if (email != null) email = email.trim().toLowerCase();
+        if (dob != null) dob = dob.trim();
+        if (newPassword != null) newPassword = newPassword.trim();
+
+        if (email == null || email.isEmpty() || dob == null || dob.isEmpty() || newPassword == null || newPassword.isEmpty()) {
+            response.sendRedirect("forgotPassword.jsp?error=Please+fill+in+all+required+fields.");
+            return;
+        }
+
+        if (newPassword.length() < 6) {
+            response.sendRedirect("forgotPassword.jsp?error=Password+must+be+at+least+6+characters+long.");
             return;
         }
 
@@ -31,47 +41,37 @@ public class ForgotPasswordServlet extends HttpServlet {
                 return;
             }
 
-            PreparedStatement ps = con.prepareStatement("SELECT name FROM users WHERE email=?");
+            // Verify email and date of birth (DOB) match in users table
+            PreparedStatement ps = con.prepareStatement("SELECT id, name FROM users WHERE LOWER(email)=? AND dob=?");
             ps.setString(1, email);
+            ps.setString(2, dob);
             ResultSet rs = ps.executeQuery();
 
             if (rs.next()) {
-                String userName = rs.getString("name");
+                int userId = rs.getInt("id");
                 rs.close();
                 ps.close();
 
-                // 🔐 Generate 6-Digit Password Reset OTP
-                String resetOtp = String.format("%06d", new java.util.Random().nextInt(900000) + 100000);
+                // Hash new password using BCrypt
+                String hashedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt());
 
-                PreparedStatement psUpdate = con.prepareStatement("UPDATE users SET otp_code=? WHERE email=?");
-                psUpdate.setString(1, resetOtp);
-                psUpdate.setString(2, email);
+                // Update password in DB
+                PreparedStatement psUpdate = con.prepareStatement("UPDATE users SET password=? WHERE id=?");
+                psUpdate.setString(1, hashedPassword);
+                psUpdate.setInt(2, userId);
                 psUpdate.executeUpdate();
                 psUpdate.close();
 
-                HttpSession session = request.getSession(true);
-                session.setAttribute("resetEmail", email);
-
-                // 📧 Send Password Reset OTP Email
-                EmailUtil.sendEmailAsync(
-                    email, 
-                    "SpanV Studios - Password Reset OTP (Code: " + resetOtp + ")",
-                    EmailUtil.buildOtpEmailTemplate(userName != null ? userName : "Customer", resetOtp)
-                );
-
-                response.sendRedirect("resetPassword.jsp?msg=Password+reset+OTP+code+sent+to+your+email!");
-                return;
-
+                response.sendRedirect("login.jsp?msg=Password+updated+successfully!+Please+login+with+your+new+password.");
             } else {
                 rs.close();
                 ps.close();
-                response.sendRedirect("forgotPassword.jsp?error=No+account+found+with+this+email+address.");
-                return;
+                response.sendRedirect("forgotPassword.jsp?error=Invalid+Email+Address+or+Date+of+Birth+(DOB).");
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.sendRedirect("forgotPassword.jsp?error=Server+error:+" + java.net.URLEncoder.encode(e.getMessage(), "UTF-8"));
+        } catch (Throwable t) {
+            t.printStackTrace();
+            response.sendRedirect("forgotPassword.jsp?error=Server+error+occurred.+Please+try+again.");
         }
     }
 }

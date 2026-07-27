@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Statement;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.*;
@@ -20,16 +21,18 @@ public class RegisterServlet extends HttpServlet {
         String name = request.getParameter("name");
         String email = request.getParameter("email");
         String password = request.getParameter("password");
+        String dob = request.getParameter("dob");
         String location = request.getParameter("location");
         String role = request.getParameter("role");
 
         if (name != null) name = name.trim();
         if (email != null) email = email.trim().toLowerCase();
         if (password != null) password = password.trim();
+        if (dob != null) dob = dob.trim();
         if (location != null) location = location.trim();
 
-        if (name == null || email == null || password == null || role == null ||
-            name.isEmpty() || email.isEmpty() || password.isEmpty() || role.isEmpty()) {
+        if (name == null || email == null || password == null || dob == null || role == null ||
+            name.isEmpty() || email.isEmpty() || password.isEmpty() || dob.isEmpty() || role.isEmpty()) {
             response.sendRedirect("register.jsp?error=empty");
             return;
         }
@@ -41,7 +44,7 @@ public class RegisterServlet extends HttpServlet {
             }
 
             // 1. Check if email already exists in users table
-            PreparedStatement psCheck = con.prepareStatement("SELECT id FROM users WHERE email=?");
+            PreparedStatement psCheck = con.prepareStatement("SELECT id FROM users WHERE LOWER(email)=?");
             psCheck.setString(1, email);
             ResultSet rsCheck = psCheck.executeQuery();
 
@@ -54,28 +57,42 @@ public class RegisterServlet extends HttpServlet {
             rsCheck.close();
             psCheck.close();
 
-            // 2. Hash password & generate 6-digit random OTP
+            // 2. Hash password & insert user directly with DOB into database (No OTP required)
             String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
-            String otpCode = String.format("%06d", new java.util.Random().nextInt(900000) + 100000);
 
-            // 3. Save pending registration data in Session (Requires OTP verification to insert into DB)
-            HttpSession session = request.getSession(true);
-            session.setAttribute("pending_name", name);
-            session.setAttribute("pending_email", email);
-            session.setAttribute("pending_password", hashedPassword);
-            session.setAttribute("pending_location", location);
-            session.setAttribute("pending_role", role);
-            session.setAttribute("pending_otp", otpCode);
-
-            // 4. Send 6-Digit OTP Email via JavaMail to user's inbox
-            util.EmailUtil.sendEmailAsync(
-                email, 
-                "SpanV Studios - Verify Your Email OTP (Code: " + otpCode + ")", 
-                util.EmailUtil.buildOtpEmailTemplate(name, otpCode)
+            PreparedStatement psInsert = con.prepareStatement(
+                "INSERT INTO users (name, email, password, dob, location, role, is_verified, email_verified, trust_score, profile_image) VALUES (?, ?, ?, ?, ?, ?, TRUE, TRUE, 10, 'default_profile.png')",
+                Statement.RETURN_GENERATED_KEYS
             );
+            psInsert.setString(1, name);
+            psInsert.setString(2, email);
+            psInsert.setString(3, hashedPassword);
+            psInsert.setString(4, dob);
+            psInsert.setString(5, location);
+            psInsert.setString(6, role);
 
-            // 5. Redirect to OTP verification page
-            response.sendRedirect("verifyOtp.jsp?msg=Please+enter+the+6-digit+OTP+sent+to+your+email+to+complete+registration.");
+            int affectedRows = psInsert.executeUpdate();
+            int newUserId = 0;
+
+            if (affectedRows > 0) {
+                ResultSet rsKeys = psInsert.getGeneratedKeys();
+                if (rsKeys.next()) {
+                    newUserId = rsKeys.getInt(1);
+                }
+                rsKeys.close();
+            }
+            psInsert.close();
+
+            // 3. Create active User Session & Auto-login
+            HttpSession session = request.getSession(true);
+            session.setAttribute("userId", newUserId);
+            session.setAttribute("userName", name);
+            session.setAttribute("userEmail", email);
+            session.setAttribute("userRole", role);
+            session.setAttribute("userLocation", location);
+
+            // 4. Redirect directly to Dashboard
+            response.sendRedirect("dashboard.jsp?msg=welcome");
 
         } catch (Throwable t) {
             t.printStackTrace(); 

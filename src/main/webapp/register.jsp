@@ -1,81 +1,68 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%
-    // Clear any previous leftover session when visiting register page
-    if (session.getAttribute("userId") != null) {
-        session.invalidate();
-        session = request.getSession(true);
-    }
-%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
     <!DOCTYPE html>
     <html lang="en">
 
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Sign Up | SpanV Studios</title>
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
-            rel="stylesheet">
-
-
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
-        <jsp:include page="layout/global_scripts.jsp" />
+        <title>Create Account | SpanV Studios</title>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <style>
             :root {
-                --primary: #db2777;
-                --primary-hover: #be185d;
-                --bg: #fff1f2;
-                --text: #2d0b1e;
-                --card-bg: #ffffff;
+                --primary: #0f766e;
+                --primary-hover: #115e59;
+                --bg: #f8fafc;
             }
 
             body {
-                margin: 0;
                 font-family: 'Outfit', sans-serif;
                 background-color: var(--bg);
-                color: var(--text);
+                margin: 0;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 min-height: 100vh;
-                padding: 20px;
+                background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+                background-size: 24px 24px;
             }
 
             .signup-card {
-                background: var(--card-bg);
-                width: 100%;
-                max-width: 450px;
+                background: white;
                 padding: 40px;
-                border-radius: 25px;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+                border-radius: 24px;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+                width: 100%;
+                max-width: 480px;
+                border: 1px solid #e2e8f0;
                 text-align: center;
             }
 
             .logo {
-                font-size: 28px;
+                font-size: 24px;
                 font-weight: 700;
                 color: var(--primary);
                 text-decoration: none;
-                display: block;
-                margin-bottom: 5px;
+                margin-bottom: 20px;
+                display: inline-block;
             }
 
             h1 {
-                font-size: 24px;
-                margin: 0;
-                color: #1e293b;
+                font-size: 22px;
+                color: #0f172a;
+                margin: 0 0 8px 0;
             }
 
             p {
                 color: #64748b;
                 font-size: 14px;
-                margin: 10px 0 25px;
+                margin-bottom: 24px;
             }
 
             .input-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
                 text-align: left;
-                display: grid;
-                grid-template-columns: 1fr;
-                gap: 15px;
             }
 
             .input-group label {
@@ -178,6 +165,11 @@
                     </div>
 
                     <div class="input-group">
+                        <label>Date of Birth (DOB)</label>
+                        <input type="date" name="dob" required>
+                    </div>
+
+                    <div class="input-group">
                         <label>Your Location</label>
                         <input type="text" name="location" placeholder="City or Street Name" required>
                     </div>
@@ -186,7 +178,7 @@
                         <label>I want to...</label>
                         <select name="role" required>
                             <option value="" disabled selected>Select your primary role</option>
-                            <option value="Customer">Shop & Buy designs (Customer)</option>
+                            <option value="Customer">Shop &amp; Buy designs (Customer)</option>
                             <option value="Owner">Sell boutique designs (Owner)</option>
                         </select>
                     </div>

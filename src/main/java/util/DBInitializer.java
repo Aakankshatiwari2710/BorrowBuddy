@@ -16,20 +16,26 @@ public class DBInitializer implements ServletContextListener {
         try (Connection con = DBConnection.getConnection()) {
             if (con != null) {
                 try (Statement stmt = con.createStatement()) {
-                    // 1. Create Users Table
+                    // 1. Create Users Table with DOB
                     stmt.executeUpdate("CREATE TABLE IF NOT EXISTS users ("
                             + "id INT AUTO_INCREMENT PRIMARY KEY, "
                             + "name VARCHAR(100) NOT NULL, "
                             + "email VARCHAR(100) UNIQUE NOT NULL, "
                             + "password VARCHAR(255) NOT NULL, "
+                            + "dob VARCHAR(20) NULL, "
                             + "location VARCHAR(100), "
                             + "role VARCHAR(20) NOT NULL, "
                             + "trust_score INT DEFAULT 0, "
-                            + "is_verified BOOLEAN DEFAULT FALSE, "
+                            + "is_verified BOOLEAN DEFAULT TRUE, "
                             + "profile_image VARCHAR(255) DEFAULT 'default_profile.png', "
                             + "otp_code VARCHAR(10) NULL, "
-                            + "email_verified BOOLEAN DEFAULT FALSE, "
+                            + "email_verified BOOLEAN DEFAULT TRUE, "
                             + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+
+                    // Migrate DOB column if missing
+                    try {
+                        stmt.executeUpdate("ALTER TABLE users ADD COLUMN dob VARCHAR(20) NULL");
+                    } catch (Exception ignored) {}
 
                     // 2. Create Items Table
                     stmt.executeUpdate("CREATE TABLE IF NOT EXISTS items ("
@@ -80,7 +86,7 @@ public class DBInitializer implements ServletContextListener {
                             + "comment TEXT, "
                             + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
 
-                    System.out.println("✅ ShareSphere DB Schema Verified & Ready!");
+                    System.out.println("✅ ShareSphere DB Schema Verified & Ready with DOB column!");
                 }
             } else {
                 System.err.println("⚠️ DB Connection is null. Skipping startup DB initialization.");
