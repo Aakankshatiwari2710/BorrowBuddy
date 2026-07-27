@@ -9,9 +9,9 @@
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <style>
             :root {
-                --primary: #0f766e;
-                --primary-hover: #115e59;
-                --bg: #f8fafc;
+                --primary: #db2777;
+                --primary-hover: #be185d;
+                --bg: #fff1f2;
             }
 
             body {
@@ -33,7 +33,7 @@
                 box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
                 width: 100%;
                 max-width: 480px;
-                border: 1px solid #e2e8f0;
+                border: 1px solid #fbcfe8;
                 text-align: center;
             }
 
@@ -88,7 +88,7 @@
             input:focus,
             select:focus {
                 border-color: var(--primary);
-                box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
+                box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.1);
             }
 
             .signup-btn {
