@@ -31,8 +31,8 @@ public class RegisterServlet extends HttpServlet {
         if (dob != null) dob = dob.trim();
         if (location != null) location = location.trim();
 
-        if (name == null || email == null || password == null || dob == null || role == null ||
-            name.isEmpty() || email.isEmpty() || password.isEmpty() || dob.isEmpty() || role.isEmpty()) {
+        if (name == null || email == null || password == null || role == null ||
+            name.isEmpty() || email.isEmpty() || password.isEmpty() || role.isEmpty()) {
             response.sendRedirect("register.jsp?error=empty");
             return;
         }
@@ -43,7 +43,14 @@ public class RegisterServlet extends HttpServlet {
                 return;
             }
 
-            // 1. Check if email already exists in users table
+            // Ensure 'dob' column exists in MySQL table on live server
+            try (Statement stmt = con.createStatement()) {
+                stmt.executeUpdate("ALTER TABLE users ADD COLUMN dob VARCHAR(20) NULL");
+            } catch (Exception ignored) {
+                // Column already exists or handled by MySQL
+            }
+
+            // 1. Check duplicate email
             PreparedStatement psCheck = con.prepareStatement("SELECT id FROM users WHERE LOWER(email)=?");
             psCheck.setString(1, email);
             ResultSet rsCheck = psCheck.executeQuery();
@@ -57,31 +64,54 @@ public class RegisterServlet extends HttpServlet {
             rsCheck.close();
             psCheck.close();
 
-            // 2. Hash password & insert user directly with DOB into database (No OTP required)
+            // 2. Hash password & insert user directly with DOB into database
             String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
-
-            PreparedStatement psInsert = con.prepareStatement(
-                "INSERT INTO users (name, email, password, dob, location, role, is_verified, email_verified, trust_score, profile_image) VALUES (?, ?, ?, ?, ?, ?, TRUE, TRUE, 10, 'default_profile.png')",
-                Statement.RETURN_GENERATED_KEYS
-            );
-            psInsert.setString(1, name);
-            psInsert.setString(2, email);
-            psInsert.setString(3, hashedPassword);
-            psInsert.setString(4, dob);
-            psInsert.setString(5, location);
-            psInsert.setString(6, role);
-
-            int affectedRows = psInsert.executeUpdate();
             int newUserId = 0;
 
-            if (affectedRows > 0) {
-                ResultSet rsKeys = psInsert.getGeneratedKeys();
-                if (rsKeys.next()) {
-                    newUserId = rsKeys.getInt(1);
+            try {
+                PreparedStatement psInsert = con.prepareStatement(
+                    "INSERT INTO users (name, email, password, dob, location, role, is_verified, email_verified, trust_score, profile_image) VALUES (?, ?, ?, ?, ?, ?, TRUE, TRUE, 10, 'default_profile.png')",
+                    Statement.RETURN_GENERATED_KEYS
+                );
+                psInsert.setString(1, name);
+                psInsert.setString(2, email);
+                psInsert.setString(3, hashedPassword);
+                psInsert.setString(4, dob);
+                psInsert.setString(5, location);
+                psInsert.setString(6, role);
+
+                int affectedRows = psInsert.executeUpdate();
+                if (affectedRows > 0) {
+                    ResultSet rsKeys = psInsert.getGeneratedKeys();
+                    if (rsKeys.next()) {
+                        newUserId = rsKeys.getInt(1);
+                    }
+                    rsKeys.close();
                 }
-                rsKeys.close();
+                psInsert.close();
+            } catch (Exception sqlEx) {
+                // Fallback insert without dob column if DB schema mismatch occurs
+                System.err.println("⚠️ Inserting with dob failed, falling back: " + sqlEx.getMessage());
+                PreparedStatement psFallback = con.prepareStatement(
+                    "INSERT INTO users (name, email, password, location, role, is_verified, email_verified, trust_score, profile_image) VALUES (?, ?, ?, ?, ?, TRUE, TRUE, 10, 'default_profile.png')",
+                    Statement.RETURN_GENERATED_KEYS
+                );
+                psFallback.setString(1, name);
+                psFallback.setString(2, email);
+                psFallback.setString(3, hashedPassword);
+                psFallback.setString(4, location);
+                psFallback.setString(5, role);
+
+                int affected = psFallback.executeUpdate();
+                if (affected > 0) {
+                    ResultSet rsKeys = psFallback.getGeneratedKeys();
+                    if (rsKeys.next()) {
+                        newUserId = rsKeys.getInt(1);
+                    }
+                    rsKeys.close();
+                }
+                psFallback.close();
             }
-            psInsert.close();
 
             // 3. Create active User Session & Auto-login
             HttpSession session = request.getSession(true);
