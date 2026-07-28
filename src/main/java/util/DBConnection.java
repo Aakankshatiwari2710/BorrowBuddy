@@ -2,6 +2,7 @@ package util;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class DBConnection {
 
@@ -10,10 +11,13 @@ public class DBConnection {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             
-            // Environment Variables check for Render, Railway, Aiven, etc.
+            // Environment Variables check for Render, Railway, Aiven, PlanetScale, CleverCloud, etc.
             String dbUrl = System.getenv("DB_URL");
             if (dbUrl == null || dbUrl.isEmpty()) dbUrl = System.getenv("MYSQL_URL");
             if (dbUrl == null || dbUrl.isEmpty()) dbUrl = System.getenv("MYSQL_PUBLIC_URL");
+            if (dbUrl == null || dbUrl.isEmpty()) dbUrl = System.getenv("DATABASE_URL");
+            if (dbUrl == null || dbUrl.isEmpty()) dbUrl = System.getenv("JAWSDB_URL");
+            if (dbUrl == null || dbUrl.isEmpty()) dbUrl = System.getenv("CLEARDB_DATABASE_URL");
             
             String dbUser = System.getenv("DB_USER");
             if (dbUser == null || dbUser.isEmpty()) dbUser = System.getenv("MYSQL_USER");
@@ -37,19 +41,24 @@ public class DBConnection {
             if (dbName == null || dbName.isEmpty()) dbName = "sharesphere";
 
             if ((dbUrl == null || dbUrl.trim().isEmpty()) && dbHost != null && !dbHost.trim().isEmpty()) {
-                dbUrl = "jdbc:mysql://" + dbHost + ":" + dbPort + "/" + dbName + "?useSSL=false&allowPublicKeyRetrieval=true";
+                dbUrl = "jdbc:mysql://" + dbHost + ":" + dbPort + "/" + dbName + "?useSSL=false&allowPublicKeyRetrieval=true&autoReconnect=true";
             }
 
             // Fallback for local development
             if (dbUrl == null || dbUrl.trim().isEmpty()) {
-                dbUrl = "jdbc:mysql://localhost:3306/sharesphere";
+                dbUrl = "jdbc:mysql://localhost:3306/" + dbName + "?useSSL=false&allowPublicKeyRetrieval=true&autoReconnect=true";
+            } else if (!dbUrl.contains("autoReconnect=true")) {
+                dbUrl += (dbUrl.contains("?") ? "&" : "?") + "autoReconnect=true&allowPublicKeyRetrieval=true";
             }
             
             con = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
             System.out.println("✅ Database Connected Successfully to: " + dbUrl);
+        } catch (ClassNotFoundException e) {
+            System.err.println("❌ MySQL JDBC Driver Class Not Found: " + e.getMessage());
+        } catch (SQLException e) {
+            System.err.println("❌ Database Connection Failed! Reason: " + e.getMessage() + " (ErrorCode: " + e.getErrorCode() + ")");
         } catch (Exception e) {
-            System.err.println("❌ Database Connection Failed! Error: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("❌ Unexpected DB Error: " + e.getMessage());
         }
         return con;
     }
