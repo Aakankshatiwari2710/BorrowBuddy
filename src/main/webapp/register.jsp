@@ -6,6 +6,8 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Create Account | SpanV Studios</title>
+        <link rel="icon" type="image/jpg" href="images/spanv_logo.jpg">
+        <link rel="shortcut icon" href="images/spanv_logo.jpg">
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <style>
             :root {
@@ -172,14 +174,7 @@
                         <input type="text" name="location" placeholder="City or Street Name" required>
                     </div>
 
-                    <div class="input-group">
-                        <label>I want to...</label>
-                        <select name="role" required>
-                            <option value="" disabled selected>Select your primary role</option>
-                            <option value="Customer">Shop &amp; Buy designs (Customer)</option>
-                            <option value="Owner">Sell boutique designs (Owner)</option>
-                        </select>
-                    </div>
+                    <input type="hidden" name="role" value="Customer">
                 </div>
 
                 <button type="submit" class="signup-btn">Join SpanV Studios</button>
