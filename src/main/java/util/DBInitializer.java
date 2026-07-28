@@ -4,14 +4,17 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.Statement;
+import org.mindrot.jbcrypt.BCrypt;
 
 @WebListener
 public class DBInitializer implements ServletContextListener {
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
-        System.out.println("Starting ShareSphere DB Migration & Clean Reset...");
+        System.out.println("Starting ShareSphere DB Migration & Seed Setup...");
         
         try (Connection con = DBConnection.getConnection()) {
             if (con != null) {
@@ -86,19 +89,36 @@ public class DBInitializer implements ServletContextListener {
                             + "comment TEXT, "
                             + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
 
-                    // 🧹 CLEAN ALL TEST DATA AS REQUESTED BY USER
-                    try {
-                        stmt.executeUpdate("DELETE FROM reviews");
-                        stmt.executeUpdate("DELETE FROM notifications");
-                        stmt.executeUpdate("DELETE FROM bookings");
-                        stmt.executeUpdate("DELETE FROM items");
-                        stmt.executeUpdate("DELETE FROM users");
-                        System.out.println("🧹 Database cleaned successfully! Ready for fresh accounts.");
-                    } catch (Exception cleanEx) {
-                        System.err.println("⚠️ DB Clean Warning: " + cleanEx.getMessage());
+                    // 👑 SEED PERMANENT BOUTIQUE OWNER ACCOUNT (spandanav2606@gmail.com / Spanv2026)
+                    String ownerEmail = "spandanav2606@gmail.com";
+                    String ownerPassword = "Spanv2026";
+                    String hashedPass = BCrypt.hashpw(ownerPassword, BCrypt.gensalt());
+
+                    try (PreparedStatement psCheck = con.prepareStatement("SELECT id FROM users WHERE LOWER(email)=?")) {
+                        psCheck.setString(1, ownerEmail);
+                        try (ResultSet rs = psCheck.executeQuery()) {
+                            if (rs.next()) {
+                                // Update existing account to Owner role with Spanv2026 password
+                                try (PreparedStatement psUp = con.prepareStatement("UPDATE users SET role='Owner', password=?, dob='2000-01-01', is_verified=1, email_verified=1 WHERE LOWER(email)=?")) {
+                                    psUp.setString(1, hashedPass);
+                                    psUp.setString(2, ownerEmail);
+                                    psUp.executeUpdate();
+                                    System.out.println("👑 Updated existing user spandanav2606@gmail.com to Owner role with password Spanv2026!");
+                                }
+                            } else {
+                                // Create fresh Owner account
+                                try (PreparedStatement psIn = con.prepareStatement("INSERT INTO users (name, email, password, dob, location, role, is_verified, email_verified, trust_score, profile_image) VALUES (?, ?, ?, '2000-01-01', 'SpanV Boutique HQ', 'Owner', 1, 1, 100, 'spanv_logo.jpg')")) {
+                                    psIn.setString(1, "SpanV Boutique Owner");
+                                    psIn.setString(2, ownerEmail);
+                                    psIn.setString(3, hashedPass);
+                                    psIn.executeUpdate();
+                                    System.out.println("👑 Created fresh permanent Owner account spandanav2606@gmail.com with password Spanv2026!");
+                                }
+                            }
+                        }
                     }
 
-                    System.out.println("✅ ShareSphere DB Schema Verified & Ready!");
+                    System.out.println("✅ ShareSphere DB Schema Verified & Owner Seeded!");
                 }
             } else {
                 System.err.println("⚠️ DB Connection is null. Skipping startup DB initialization.");
