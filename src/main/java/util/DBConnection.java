@@ -3,6 +3,7 @@ package util;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.net.URI;
 
 public class DBConnection {
 
@@ -22,12 +23,10 @@ public class DBConnection {
             String dbUser = System.getenv("DB_USER");
             if (dbUser == null || dbUser.isEmpty()) dbUser = System.getenv("MYSQL_USER");
             if (dbUser == null || dbUser.isEmpty()) dbUser = System.getenv("MYSQLUSER");
-            if (dbUser == null) dbUser = "root";
 
             String dbPassword = System.getenv("DB_PASSWORD");
             if (dbPassword == null || dbPassword.isEmpty()) dbPassword = System.getenv("MYSQL_PASSWORD");
             if (dbPassword == null || dbPassword.isEmpty()) dbPassword = System.getenv("MYSQLPASSWORD");
-            if (dbPassword == null) dbPassword = "";
 
             String dbHost = System.getenv("MYSQL_HOST");
             if (dbHost == null || dbHost.isEmpty()) dbHost = System.getenv("MYSQLHOST");
@@ -40,17 +39,42 @@ public class DBConnection {
             if (dbName == null || dbName.isEmpty()) dbName = System.getenv("MYSQLDATABASE");
             if (dbName == null || dbName.isEmpty()) dbName = "sharesphere";
 
-            if ((dbUrl == null || dbUrl.trim().isEmpty()) && dbHost != null && !dbHost.trim().isEmpty()) {
+            // Parse mysql:// URLs into valid JDBC format
+            if (dbUrl != null && !dbUrl.trim().isEmpty()) {
+                if (dbUrl.startsWith("mysql://") || dbUrl.startsWith("mariadb://")) {
+                    try {
+                        URI uri = new URI(dbUrl);
+                        if (uri.getUserInfo() != null && uri.getUserInfo().contains(":")) {
+                            String[] userInfo = uri.getUserInfo().split(":", 2);
+                            if (dbUser == null || dbUser.isEmpty()) dbUser = userInfo[0];
+                            if (dbPassword == null || dbPassword.isEmpty()) dbPassword = userInfo[1];
+                        }
+                        String host = uri.getHost();
+                        int port = uri.getPort() > 0 ? uri.getPort() : 3306;
+                        String path = uri.getPath();
+                        if (path != null && path.startsWith("/")) path = path.substring(1);
+                        if (path == null || path.isEmpty()) path = dbName;
+
+                        dbUrl = "jdbc:mysql://" + host + ":" + port + "/" + path + "?useSSL=false&allowPublicKeyRetrieval=true&autoReconnect=true";
+                    } catch (Exception e) {
+                        dbUrl = "jdbc:" + dbUrl;
+                    }
+                } else if (!dbUrl.startsWith("jdbc:")) {
+                    dbUrl = "jdbc:mysql://" + dbUrl;
+                }
+            } else if (dbHost != null && !dbHost.trim().isEmpty()) {
                 dbUrl = "jdbc:mysql://" + dbHost + ":" + dbPort + "/" + dbName + "?useSSL=false&allowPublicKeyRetrieval=true&autoReconnect=true";
+            } else {
+                dbUrl = "jdbc:mysql://localhost:3306/" + dbName + "?useSSL=false&allowPublicKeyRetrieval=true&autoReconnect=true";
             }
 
-            // Fallback for local development
-            if (dbUrl == null || dbUrl.trim().isEmpty()) {
-                dbUrl = "jdbc:mysql://localhost:3306/" + dbName + "?useSSL=false&allowPublicKeyRetrieval=true&autoReconnect=true";
-            } else if (!dbUrl.contains("autoReconnect=true")) {
+            if (!dbUrl.contains("autoReconnect=true")) {
                 dbUrl += (dbUrl.contains("?") ? "&" : "?") + "autoReconnect=true&allowPublicKeyRetrieval=true";
             }
             
+            if (dbUser == null) dbUser = "root";
+            if (dbPassword == null) dbPassword = "";
+
             con = DriverManager.getConnection(dbUrl, dbUser, dbPassword);
             System.out.println("✅ Database Connected Successfully to: " + dbUrl);
         } catch (ClassNotFoundException e) {
