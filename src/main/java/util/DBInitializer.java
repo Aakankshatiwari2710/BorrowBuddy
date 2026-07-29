@@ -40,7 +40,7 @@ public class DBInitializer implements ServletContextListener {
                         stmt.executeUpdate("ALTER TABLE users ADD COLUMN dob VARCHAR(20) NULL");
                     } catch (Exception ignored) {}
 
-                    // 2. Create Items Table
+                    // 2. Create Items Table with Multiple Images JSON/List column
                     stmt.executeUpdate("CREATE TABLE IF NOT EXISTS items ("
                             + "id INT AUTO_INCREMENT PRIMARY KEY, "
                             + "name VARCHAR(100) NOT NULL, "
@@ -48,10 +48,16 @@ public class DBInitializer implements ServletContextListener {
                             + "price DOUBLE NOT NULL, "
                             + "category VARCHAR(50), "
                             + "image VARCHAR(255), "
+                            + "images_json TEXT NULL, "
                             + "owner_email VARCHAR(100) NOT NULL, "
                             + "offer_tag VARCHAR(100) DEFAULT '', "
                             + "stock_status VARCHAR(20) DEFAULT 'In Stock', "
                             + "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)");
+
+                    // Migrate images_json column if missing
+                    try {
+                        stmt.executeUpdate("ALTER TABLE items ADD COLUMN images_json TEXT NULL");
+                    } catch (Exception ignored) {}
 
                     // 3. Create Bookings Table
                     stmt.executeUpdate("CREATE TABLE IF NOT EXISTS bookings ("
@@ -98,27 +104,25 @@ public class DBInitializer implements ServletContextListener {
                         psCheck.setString(1, ownerEmail);
                         try (ResultSet rs = psCheck.executeQuery()) {
                             if (rs.next()) {
-                                // Update existing account to Owner role with Spanv2026 password
                                 try (PreparedStatement psUp = con.prepareStatement("UPDATE users SET role='Owner', password=?, dob='2000-01-01', is_verified=1, email_verified=1 WHERE LOWER(email)=?")) {
                                     psUp.setString(1, hashedPass);
                                     psUp.setString(2, ownerEmail);
                                     psUp.executeUpdate();
-                                    System.out.println("👑 Updated existing user spandanav2606@gmail.com to Owner role with password Spanv2026!");
+                                    System.out.println("👑 Updated existing user spandanav2606@gmail.com to Owner role!");
                                 }
                             } else {
-                                // Create fresh Owner account
                                 try (PreparedStatement psIn = con.prepareStatement("INSERT INTO users (name, email, password, dob, location, role, is_verified, email_verified, trust_score, profile_image) VALUES (?, ?, ?, '2000-01-01', 'SpanV Boutique HQ', 'Owner', 1, 1, 100, 'spanv_logo.jpg')")) {
                                     psIn.setString(1, "SpanV Boutique Owner");
                                     psIn.setString(2, ownerEmail);
                                     psIn.setString(3, hashedPass);
                                     psIn.executeUpdate();
-                                    System.out.println("👑 Created fresh permanent Owner account spandanav2606@gmail.com with password Spanv2026!");
+                                    System.out.println("👑 Created fresh permanent Owner account spandanav2606@gmail.com!");
                                 }
                             }
                         }
                     }
 
-                    System.out.println("✅ ShareSphere DB Schema Verified & Owner Seeded!");
+                    System.out.println("✅ ShareSphere DB Schema Verified & Multiple Image Support Enabled!");
                 }
             } else {
                 System.err.println("⚠️ DB Connection is null. Skipping startup DB initialization.");

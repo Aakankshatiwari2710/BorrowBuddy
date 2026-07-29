@@ -179,8 +179,32 @@
                     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
                 </style>
                 <div class="badge">₹<%= rs.getInt("price") %></div>
-                <img src="<%=request.getContextPath()%>/images/<%= rs.getString("image") %>" 
-                     onerror="this.src='<%=request.getContextPath()%>/images/default.png'">
+                <img src="<%=request.getContextPath()%>/images/<%= rs.getString("image") %>" id="mainImg_<%= itemId %>"
+                     onerror="this.src='<%=request.getContextPath()%>/images/default.png'"
+                     style="width: 100%; height: 220px; object-fit: cover; border-top-left-radius: 20px; border-top-right-radius: 20px;">
+
+                <%
+                    String imagesJson = "";
+                    try { imagesJson = rs.getString("images_json"); } catch (Exception ignored) {}
+                    if (imagesJson == null || imagesJson.trim().isEmpty()) imagesJson = itemImg;
+                    String[] allPhotos = imagesJson.split(",");
+                    if (allPhotos.length > 1) {
+                %>
+                    <div class="photo-thumbnails" style="display: flex; gap: 8px; padding: 8px 12px; background: #fafafa; overflow-x: auto; border-bottom: 1px solid #f1f5f9;">
+                        <% for (int p = 0; p < allPhotos.length; p++) {
+                            String pImg = allPhotos[p].trim();
+                            if (pImg.isEmpty()) continue;
+                        %>
+                            <img src="<%=request.getContextPath()%>/images/<%= pImg %>"
+                                 onclick="document.getElementById('mainImg_<%= itemId %>').src = this.src"
+                                 style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; cursor: pointer; border: 2px solid #e2e8f0; transition: 0.2s;"
+                                 onmouseover="this.style.borderColor='#db2777'"
+                                 onmouseout="this.style.borderColor='#e2e8f0'"
+                                 onerror="this.style.display='none'">
+                        <% } %>
+                    </div>
+                <% } %>
+
                 <div class="card-body">
                     <div style="display:flex; justify-content:space-between; align-items:start;">
                         <span class="item-category-badge"><%= rs.getString("category") %></span>
