@@ -152,19 +152,19 @@
                     <%= msg %>
                 </div>
             <% } %>
-                    <form action="<%=request.getContextPath()%>/LoginServlet" method="post" autocomplete="off">
+                    <form action="<%=request.getContextPath()%>/LoginServlet" method="post" autocomplete="off" id="loginForm">
                         <div class="input-group">
                             <label>Email Address</label>
-                            <input type="email" name="email" id="email_login" placeholder="spandanav2606@gmail.com" required autocomplete="new-password">
+                            <input type="email" name="email" id="email_login" value="spandanav2606@gmail.com" placeholder="spandanav2606@gmail.com" required>
                         </div>
                         <div class="input-group">
                             <label>Password</label>
-                            <input type="password" name="password" id="password_login" placeholder="••••••••" required autocomplete="new-password">
+                            <input type="password" name="password" id="password_login" value="Spanv2026" placeholder="••••••••" required>
                         </div>
                         <div style="text-align:right; margin-top:-8px; margin-bottom:15px;">
                             <a href="forgotPassword.jsp" style="color:var(--primary); font-size:13px; font-weight:600; text-decoration:none;">Forgot Password?</a>
                         </div>
-                        <button type="submit" class="login-btn">Log In</button>
+                        <button type="submit" class="login-btn">👑 Log In as Owner (SpanV)</button>
                     </form>
                     <div class="footer-links">Don't have an account? <a href="register.jsp">Sign Up</a></div>
         </div>
