@@ -147,12 +147,11 @@
             <% String err=request.getParameter("error"); if(err !=null) { String
                 msg="Login failed. Please check credentials." ; if("wrongpass".equals(err))
                 msg="Incorrect password. Please try again." ; else if("notfound".equals(err))
-                msg="Account not found with this email." ; else if("empty".equals(err)) msg="Please fill in all fields."
-                ; %>
+                msg="Account not found with this email. You can sign up easily!" ; else if("empty".equals(err)) msg="Please fill in all fields." ; else if(err.length() > 0 && !err.equals("exception")) msg = err; %>
                 <div class="error-msg">
                     <%= msg %>
                 </div>
-                <% } %>
+            <% } %>
                     <form action="<%=request.getContextPath()%>/LoginServlet" method="post" autocomplete="off">
                         <div class="input-group">
                             <label>Email Address</label>

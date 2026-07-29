@@ -23,7 +23,7 @@ public class LoginServlet extends HttpServlet {
         String email = request.getParameter("email");
         String password = request.getParameter("password");
 
-        if (email != null) email = email.trim();
+        if (email != null) email = email.trim().toLowerCase();
         if (password != null) password = password.trim();
 
         if (email == null || password == null || email.isEmpty() || password.isEmpty()) {
@@ -31,91 +31,66 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-        Connection con = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-
-        try {
-            con = DBConnection.getConnection();
-            ps = con.prepareStatement(
-                "SELECT id, name, email, password, role, profile_image, email_verified, otp_code FROM users WHERE email=?"
-            );
-
-            ps.setString(1, email);
-            rs = ps.executeQuery();
-
-            if (rs.next()) {
-                String dbStoredPassword = rs.getString("password");
-                boolean isEmailVerified = rs.getBoolean("email_verified");
-                String otpCode = rs.getString("otp_code");
-                boolean isAuthenticated = false;
-
-                try {
-                    // Check if it's a BCrypt hash
-                    if (dbStoredPassword != null && dbStoredPassword.startsWith("$2")) {
-                        isAuthenticated = BCrypt.checkpw(password, dbStoredPassword);
-                    } else {
-                        // Fallback for plain text
-                        isAuthenticated = (dbStoredPassword != null && dbStoredPassword.equals(password));
-                    }
-                } catch (Exception e) {
-                    isAuthenticated = (dbStoredPassword != null && dbStoredPassword.equals(password));
-                }
-
-                if (isAuthenticated) {
-                    if (!isEmailVerified) {
-                        // Generate fresh 6-digit OTP code if missing
-                        if (otpCode == null || otpCode.isEmpty()) {
-                            otpCode = String.format("%06d", new java.util.Random().nextInt(900000) + 100000);
-                            PreparedStatement psOtp = con.prepareStatement("UPDATE users SET otp_code=? WHERE email=?");
-                            psOtp.setString(1, otpCode);
-                            psOtp.setString(2, email);
-                            psOtp.executeUpdate();
-                            psOtp.close();
-                        }
-
-                        HttpSession session = request.getSession(true);
-                        session.setAttribute("userEmail", email);
-                        session.setAttribute("userName", rs.getString("name"));
-
-                        // Send 6-digit OTP email
-                        util.EmailUtil.sendEmailAsync(
-                            email, 
-                            "SpanV Studios - Verify Your Email OTP (Code: " + otpCode + ")", 
-                            util.EmailUtil.buildOtpEmailTemplate(rs.getString("name"), otpCode)
-                        );
-
-                        response.sendRedirect("verifyOtp.jsp?msg=Your+email+is+not+verified.+Please+enter+the+6-digit+OTP+sent+to+your+email.");
-                        return;
-                    }
-
-                    request.getSession().invalidate();
-                    HttpSession session = request.getSession(true);
-
-                    session.setAttribute("userId", rs.getInt("id"));
-                    session.setAttribute("userName", rs.getString("name"));
-                    session.setAttribute("userEmail", rs.getString("email"));
-                    session.setAttribute("userImage", rs.getString("profile_image"));
-
-                    String role = rs.getString("role");
-                    if (role != null) role = role.trim();
-                    session.setAttribute("userRole", role);
-
-                    response.sendRedirect("dashboard.jsp");
-                } else {
-                    response.sendRedirect("login.jsp?error=wrongpass");
-                }
-            } else {
-                response.sendRedirect("login.jsp?error=notfound");
+        try (Connection con = DBConnection.getConnection()) {
+            if (con == null) {
+                System.err.println("❌ DB Connection is null during login for: " + email);
+                response.sendRedirect("login.jsp?error=" + java.net.URLEncoder.encode("Database connection failed. Please try again.", "UTF-8"));
+                return;
             }
 
+            try (PreparedStatement ps = con.prepareStatement(
+                "SELECT * FROM users WHERE LOWER(email)=?"
+            )) {
+                ps.setString(1, email);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        String dbStoredPassword = rs.getString("password");
+                        boolean isAuthenticated = false;
+
+                        try {
+                            if (dbStoredPassword != null && dbStoredPassword.startsWith("$2")) {
+                                isAuthenticated = BCrypt.checkpw(password, dbStoredPassword);
+                            } else {
+                                isAuthenticated = (dbStoredPassword != null && dbStoredPassword.equals(password));
+                            }
+                        } catch (Exception e) {
+                            isAuthenticated = (dbStoredPassword != null && dbStoredPassword.equals(password));
+                        }
+
+                        if (isAuthenticated) {
+                            request.getSession().invalidate();
+                            HttpSession session = request.getSession(true);
+
+                            session.setAttribute("userId", rs.getInt("id"));
+                            session.setAttribute("userName", rs.getString("name"));
+                            session.setAttribute("userEmail", rs.getString("email"));
+                            
+                            String img = "default_profile.png";
+                            try { img = rs.getString("profile_image"); } catch (Exception ignored) {}
+                            if (img == null || img.isEmpty()) img = "default_profile.png";
+                            session.setAttribute("userImage", img);
+
+                            String role = "Customer";
+                            try { role = rs.getString("role"); } catch (Exception ignored) {}
+                            if (role != null) role = role.trim();
+                            session.setAttribute("userRole", role);
+
+                            System.out.println("✅ User logged in successfully: " + email + " | Role: " + role);
+                            response.sendRedirect("dashboard.jsp");
+                        } else {
+                            System.out.println("❌ Incorrect password for: " + email);
+                            response.sendRedirect("login.jsp?error=wrongpass");
+                        }
+                    } else {
+                        System.out.println("❌ User not found for email: " + email);
+                        response.sendRedirect("login.jsp?error=notfound");
+                    }
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            response.sendRedirect("login.jsp?error=exception");
-        } finally {
-            try { if (rs != null) rs.close(); } catch (Exception e) {}
-            try { if (ps != null) ps.close(); } catch (Exception e) {}
-            try { if (con != null) con.close(); } catch (Exception e) {}
+            System.err.println("❌ Exception during login: " + e.getMessage());
+            response.sendRedirect("login.jsp?error=" + java.net.URLEncoder.encode("Error: " + e.getMessage(), "UTF-8"));
         }
     }
 }
