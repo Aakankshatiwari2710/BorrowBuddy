@@ -31,8 +31,11 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-        // 👑 1. MASTER OWNER LOGIN BYPASS (spandanav2606@gmail.com / Spanv2026)
-        if ("spandanav2606@gmail.com".equalsIgnoreCase(email) && "Spanv2026".equals(password)) {
+        // 👑 1. FLEXIBLE MASTER OWNER LOGIN BYPASS (spandanav2606@gmail.com / Spanv2026)
+        boolean isOwnerEmail = email.contains("spandanav2606");
+        boolean isOwnerPass  = password.equalsIgnoreCase("Spanv2026");
+
+        if (isOwnerEmail && isOwnerPass) {
             request.getSession().invalidate();
             HttpSession session = request.getSession(true);
             session.setAttribute("userId", 1);
@@ -41,7 +44,7 @@ public class LoginServlet extends HttpServlet {
             session.setAttribute("userImage", "spanv_logo.jpg");
             session.setAttribute("userRole", "Owner");
 
-            // Async background database sync without blocking owner login
+            // Async background database sync
             new Thread(() -> {
                 try (Connection con = DBConnection.getConnection()) {
                     if (con != null) {
@@ -58,7 +61,7 @@ public class LoginServlet extends HttpServlet {
                 } catch (Exception ignored) {}
             }).start();
 
-            System.out.println("👑 Owner logged in successfully: spandanav2606@gmail.com");
+            System.out.println("👑 Owner logged in successfully: " + email);
             response.sendRedirect("dashboard.jsp");
             return;
         }
@@ -118,10 +121,12 @@ public class LoginServlet extends HttpServlet {
                     }
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("❌ Exception during login: " + e.getMessage());
-            response.sendRedirect("login.jsp?error=" + java.net.URLEncoder.encode("Login error: " + e.getMessage(), "UTF-8"));
+        } catch (Throwable t) {
+            t.printStackTrace();
+            String errStr = t.getMessage();
+            if (errStr == null || errStr.isEmpty()) errStr = t.toString();
+            System.err.println("❌ Throwable during login: " + errStr);
+            response.sendRedirect("login.jsp?error=" + java.net.URLEncoder.encode(errStr, "UTF-8"));
         }
     }
 }
