@@ -174,7 +174,14 @@
                         <input type="text" name="location" placeholder="City or Street Name" required>
                     </div>
 
-                    <input type="hidden" name="role" value="Customer">
+                    <div class="input-group">
+                        <label>I want to... *</label>
+                        <select name="role" required style="width: 100%; padding: 13px 16px; border-radius: 12px; border: 1.5px solid var(--border); font-family: inherit; font-size: 15px; background: #fafafa; color: var(--text);">
+                            <option value="" disabled selected>Select your account type</option>
+                            <option value="Customer">🛍️ Shop &amp; Buy boutique designs (Customer)</option>
+                            <option value="Owner">👑 Sell &amp; Rent boutique designs (Owner)</option>
+                        </select>
+                    </div>
                 </div>
 
                 <button type="submit" class="signup-btn">Join SpanV Studios</button>
