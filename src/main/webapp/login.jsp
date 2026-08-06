@@ -144,14 +144,24 @@
             <a href="home.jsp" class="logo">✨ SpanV Studios</a>
             <h1>Welcome Back</h1>
             <p>Log in to access your boutique shopping account.</p>
-            <% String err=request.getParameter("error"); if(err !=null) { String
-                msg="Login failed. Please check credentials." ; if("wrongpass".equals(err))
-                msg="Incorrect password. Please try again." ; else if("notfound".equals(err))
-                msg="Account not found with this email. You can sign up easily!" ; else if("empty".equals(err)) msg="Please fill in all fields." ; else if(err.length() > 0 && !err.equals("exception")) msg = err; %>
+            <% 
+                String err = request.getParameter("error"); 
+                if (err != null && !err.equals("exception") && !err.isEmpty()) { 
+                    String msg = "Login failed. Please check credentials."; 
+                    if ("wrongpass".equals(err)) msg = "Incorrect password. Please try again."; 
+                    else if ("notfound".equals(err)) msg = "Account not found with this email. You can sign up easily!"; 
+                    else if ("empty".equals(err)) msg = "Please fill in all fields."; 
+                    else msg = err; 
+            %>
                 <div class="error-msg" id="errorMsgBox">
                     <%= msg %>
                 </div>
             <% } %>
+            <script>
+                if (window.location.search.includes('error=exception')) {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            </script>
                     <form action="<%=request.getContextPath()%>/LoginServlet" method="post" autocomplete="off" id="loginForm">
                         <div class="input-group">
                             <label>Email Address</label>
