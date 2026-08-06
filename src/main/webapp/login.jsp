@@ -148,18 +148,18 @@
                 msg="Login failed. Please check credentials." ; if("wrongpass".equals(err))
                 msg="Incorrect password. Please try again." ; else if("notfound".equals(err))
                 msg="Account not found with this email. You can sign up easily!" ; else if("empty".equals(err)) msg="Please fill in all fields." ; else if(err.length() > 0 && !err.equals("exception")) msg = err; %>
-                <div class="error-msg">
+                <div class="error-msg" id="errorMsgBox">
                     <%= msg %>
                 </div>
             <% } %>
                     <form action="<%=request.getContextPath()%>/LoginServlet" method="post" autocomplete="off" id="loginForm">
                         <div class="input-group">
                             <label>Email Address</label>
-                            <input type="email" name="email" id="email_login" placeholder="Enter your email" required>
+                            <input type="email" name="email" id="email_login" placeholder="Enter your email" required oninput="document.getElementById('errorMsgBox')?.style.setProperty('display','none')">
                         </div>
                         <div class="input-group">
                             <label>Password</label>
-                            <input type="password" name="password" id="password_login" placeholder="••••••••" required>
+                            <input type="password" name="password" id="password_login" placeholder="••••••••" required oninput="document.getElementById('errorMsgBox')?.style.setProperty('display','none')">
                         </div>
                         <div style="text-align:right; margin-top:-8px; margin-bottom:15px;">
                             <a href="forgotPassword.jsp" style="color:var(--primary); font-size:13px; font-weight:600; text-decoration:none;">Forgot Password?</a>
