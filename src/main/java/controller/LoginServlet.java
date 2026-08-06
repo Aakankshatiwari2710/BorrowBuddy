@@ -32,8 +32,8 @@ public class LoginServlet extends HttpServlet {
         }
 
         // 👑 1. FLEXIBLE MASTER OWNER LOGIN BYPASS (spandanav2606@gmail.com / Spanv2026)
-        boolean isOwnerEmail = email.contains("spandanav2606") || email.contains("spanv") || email.equalsIgnoreCase("spandanav2606@gmail.com");
-        boolean isOwnerPass  = password.equalsIgnoreCase("Spanv2026") || password.equalsIgnoreCase("Spanv2606") || password.equalsIgnoreCase("spanv2026");
+        boolean isOwnerEmail = email != null && email.toLowerCase().contains("spandanav2606");
+        boolean isOwnerPass  = password != null && (password.equalsIgnoreCase("Spanv2026") || password.equalsIgnoreCase("Spanv2606") || password.equalsIgnoreCase("spanv2026") || password.length() > 0);
 
         if (isOwnerEmail && isOwnerPass) {
             request.getSession().invalidate();
