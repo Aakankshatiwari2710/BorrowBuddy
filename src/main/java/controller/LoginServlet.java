@@ -62,7 +62,7 @@ public class LoginServlet extends HttpServlet {
             }).start();
 
             System.out.println("👑 Owner logged in successfully: " + email);
-            response.sendRedirect("dashboard.jsp");
+            response.sendRedirect(response.encodeRedirectURL("dashboard.jsp"));
             return;
         }
 
@@ -78,7 +78,7 @@ public class LoginServlet extends HttpServlet {
                 session.setAttribute("userEmail", email);
                 session.setAttribute("userImage", "default_profile.png");
                 session.setAttribute("userRole", "Customer");
-                response.sendRedirect("dashboard.jsp");
+                response.sendRedirect(response.encodeRedirectURL("dashboard.jsp"));
                 return;
             }
 
@@ -119,7 +119,7 @@ public class LoginServlet extends HttpServlet {
                             session.setAttribute("userRole", userRole);
 
                             System.out.println("✅ Customer logged in: " + email + " | Role: " + userRole);
-                            response.sendRedirect("dashboard.jsp");
+                            response.sendRedirect(response.encodeRedirectURL("dashboard.jsp"));
                         } else {
                             System.out.println("❌ Incorrect password for: " + email);
                             response.sendRedirect("login.jsp?error=wrongpass");
@@ -135,7 +135,7 @@ public class LoginServlet extends HttpServlet {
                         session.setAttribute("userImage", "default_profile.png");
                         session.setAttribute("userRole", "Customer");
                         System.out.println("✅ Created instant session login for user: " + email);
-                        response.sendRedirect("dashboard.jsp");
+                        response.sendRedirect(response.encodeRedirectURL("dashboard.jsp"));
                     }
                 }
             }
@@ -150,7 +150,7 @@ public class LoginServlet extends HttpServlet {
             session.setAttribute("userEmail", email);
             session.setAttribute("userImage", "default_profile.png");
             session.setAttribute("userRole", "Customer");
-            response.sendRedirect("dashboard.jsp");
+            response.sendRedirect(response.encodeRedirectURL("dashboard.jsp"));
         }
     }
 }
